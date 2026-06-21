@@ -160,7 +160,7 @@
             dataProses = databaseGedung.filter(item => item.wilayah === filter);
         }
 
-        // Kalkulasi Total Metrik Utama
+// Kalkulasi Total Metrik Utama
         let totalLwbp = 0, totalWbp = 0, totalCost = 0;
         dataProses.forEach(d => {
             totalLwbp += d.lwbp;
@@ -170,9 +170,19 @@
         let totalKwh = totalLwbp + totalWbp;
         let totalCarbon = totalKwh * 0.85;
 
-        // Tampilkan Ke Kartu Atas
-        document.getElementById('mLwbp').innerHTML = `${Math.round(totalLwbp).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span>`;
-        document.getElementById('mWbp').innerHTML = `${Math.round(totalWbp).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span>`;
+        // Hitung Persentase Global LWBP vs WBP
+        let pctLwbp = totalKwh > 0 ? ((totalLwbp / totalKwh) * 100).toFixed(1) : 0;
+        let pctWbp = totalKwh > 0 ? ((totalWbp / totalKwh) * 100).toFixed(1) : 0;
+
+        // Tampilkan Ke Kartu Atas dengan Tambahan Persentase
+        document.getElementById('mLwbp').innerHTML = `
+            ${Math.round(totalLwbp).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span>
+            <span class="badge bg-primary ms-2" style="font-size: 0.85rem;">${pctLwbp}%</span>
+        `;
+        document.getElementById('mWbp').innerHTML = `
+            ${Math.round(totalWbp).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span>
+            <span class="badge bg-warning text-dark ms-2" style="font-size: 0.85rem;">${pctWbp}%</span>
+        `;
         document.getElementById('mCarbon').innerHTML = `${Math.round(totalCarbon).toLocaleString('id-ID')} <span class="fs-6 text-muted">kg CO₂</span>`;
         document.getElementById('mCost').innerText = `Rp ${totalCost.toLocaleString('id-ID')}`;
 
