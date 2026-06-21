@@ -19,7 +19,7 @@
 <div class="container py-4">
     <div class="text-center mb-4">
         <h1 class="header-title">🏢 Laporan Analisis Power & Emisi Gedung</h1>
-        <p class="text-muted">By Unesa Smart Energy | Dynamic Date & File Mapping</p>
+        <p class="text-muted">By Unesa Smart Energy | Multi-Hour Log Aggregator</p>
     </div>
 
     <div class="card p-4">
@@ -27,7 +27,7 @@
             <div class="col-md-2">
                 <label class="form-label fw-bold">Rentang Analisis</label>
                 <select name="mode" id="selectedMode" class="form-select bg-light fw-bold text-primary">
-                    <option value="harian" selected>📅 Harian (Menit)</option>
+                    <option value="harian" selected>📅 Harian (Semua Jam Berjalan)</option>
                     <option value="mingguan">📊 Mingguan (7 Hari)</option>
                     <option value="bulanan">📈 Bulanan (30 Hari)</option>
                 </select>
@@ -54,7 +54,7 @@
             </div>
         </form>
         <div class="mt-2 text-end">
-            <small class="text-muted">Target berkas terdeteksi: <code id="lblTargetFile" class="fw-bold text-dark">Mengecek tanggal...</code></small>
+            <small class="text-muted">Metode Pemindaian: <code id="lblTargetFile" class="fw-bold text-dark">Menggabungkan file log_YYYYMMDD_[00-23].txt</code></small>
         </div>
     </div>
 
@@ -159,31 +159,35 @@
         containerCarbon.innerHTML += `<div class="col-12"><div class="card p-3"><div class="d-flex justify-content-between align-items-center mb-1"><h6 class="fw-bold m-0 text-dark">🍃 CARBON FOOTPRINT ID ${i}</h6><span class="badge bg-success">Emisi (gram CO₂)</span></div><div class="chart-container"><canvas id="chartCarbon_${i}"></canvas></div></div></div>`;
     }
 
-    // 3. Helper Pengonversi Format Tanggal (Input HTML -> String Nama File Server)
-    function getFormattedDate(dateString) {
-        if (!dateString) return "";
-        return dateString.replace(/-/g, ""); // "2026-06-18" menjadi "20260618"
+    // 3. Helper Pengonversi Format Tanggal
+    function getFormattedDate(dateObj) {
+        let yyyy = dateObj.getFullYear();
+        let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        let dd = String(dateObj.getDate()).padStart(2, '0');
+        return `${yyyy}${mm}${dd}`;
     }
 
-    // Live Update Teks Label Target Berkas saat tanggal diubah
     function updateFileLabel() {
         const tglInput = document.getElementById('filterTanggal').value;
         const mode = document.getElementById('selectedMode').value;
-        const formattedDate = getFormattedDate(tglInput);
+        if (!tglInput) return;
+        
+        const baseDate = new Date(tglInput);
+        const formattedDate = getFormattedDate(baseDate);
 
         if (mode === "harian") {
-            document.getElementById('lblTargetFile').innerText = `log_${formattedDate}_10.txt (Jam Berjalan)`;
+            document.getElementById('lblTargetFile').innerText = `Menggabungkan log_${formattedDate}_[00-23].txt (24 Jam Utuh)`;
         } else if (mode === "mingguan") {
-            document.getElementById('lblTargetFile').innerText = `Rentang 7 hari sebelum ${tglInput}`;
+            document.getElementById('lblTargetFile').innerText = `Menggabungkan data 7 hari sebelum ${tglInput} (Tiap Jam)`;
         } else {
-            document.getElementById('lblTargetFile').innerText = `Rentang 30 hari sebelum ${tglInput}`;
+            document.getElementById('lblTargetFile').innerText = `Menggabungkan data 30 hari sebelum ${tglInput} (Tiap Jam)`;
         }
     }
 
     document.getElementById('filterTanggal').addEventListener('change', updateFileLabel);
     document.getElementById('selectedMode').addEventListener('change', updateFileLabel);
 
-    // 4. CSV Text Parser
+    // 4. CSV Text Parser (Diurutkan berdasarkan Waktu secara presisi)
     function parsePzemCsv(text) {
         const lines = text.split('\n');
         const result = [];
@@ -193,10 +197,11 @@
             const columns = line.split(',');
             if (columns.length < 9) continue;
 
-            const fullTimestamp = columns[0].trim();
+            const fullTimestamp = columns[0].trim(); // Format: "YYYY-MM-DD HH:MM:SS"
             const timeOnly = fullTimestamp.split(' ')[1] || fullTimestamp; 
 
             result.push({
+                timestamp: fullTimestamp, // Digunakan untuk sortir multi-jam
                 time: timeOnly,
                 id: parseInt(columns[1]),
                 voltage: parseFloat(columns[2]),
@@ -211,7 +216,7 @@
         return result;
     }
 
-    // 5. Core Engine Penarik Data Multi-file Berdasarkan Pilihan Tanggal & Rentang
+    // 5. Engine Penarik Data Multi-file Berdasarkan Jam (00-23) dan Rentang Hari
     function loadLogData() {
         const tglInput = document.getElementById('filterTanggal').value;
         const mode = document.getElementById('selectedMode').value;
@@ -224,54 +229,69 @@
 
         alertBox.style.display = 'block';
         alertBox.className = "alert alert-info text-center fw-bold shadow-sm";
-        alertBox.innerText = `⏳ Sedang menyelaraskan & memuat berkas data untuk rentang ${mode}...`;
+        alertBox.innerText = `⏳ Sedang menyisir & menggabungkan file log tiap jam untuk rentang ${mode}...`;
 
         let filesToFetch = [];
         const baseDate = new Date(tglInput);
 
-        // Menentukan daftar file log yang harus ditarik berdasarkan mode rentang analisis
+        // KONDISI 1: HARIAN -> Looping otomatis jam 00 s.d 23 untuk tanggal terpilih
         if (mode === "harian") {
-            filesToFetch.push(`log_${getFormattedDate(tglInput)}_10.txt`);
-        } else {
+            let formattedDate = getFormattedDate(baseDate);
+            for (let hour = 0; hour < 24; hour++) {
+                let hh = String(hour).padStart(2, '0');
+                filesToFetch.push(`log_${formattedDate}_${hh}.txt`);
+            }
+        } 
+        // KONDISI 2: MINGGUAN / BULANAN -> Looping hari sekaligus looping 24 jam per harinya
+        else {
             let daysCount = mode === "mingguan" ? 7 : 30;
-            for (let i = 0; i < daysCount; i++) {
+            for (let d = 0; d < daysCount; d++) {
                 let tempDate = new Date(baseDate);
-                tempDate.setDate(baseDate.getDate() - i);
-                let yyyy = tempDate.getFullYear();
-                let mm = String(tempDate.getMonth() + 1).padStart(2, '0');
-                let dd = String(tempDate.getDate()).padStart(2, '0');
-                filesToFetch.push(`log_${yyyy}${mm}${dd}_10.txt`);
+                tempDate.setDate(baseDate.getDate() - d);
+                let formattedDate = getFormattedDate(tempDate);
+                
+                for (let hour = 0; hour < 24; hour++) {
+                    let hh = String(hour).padStart(2, '0');
+                    filesToFetch.push(`log_${formattedDate}_${hh}.txt`);
+                }
             }
         }
 
-        // Eksekusi penarikan data paralel (Promise.all)
         rawData = [];
+        let successCount = 0;
+
+        // Eksekusi penarikan data massal secara paralel
         let fetchPromises = filesToFetch.map(fileName => 
             fetch(fileName)
-                .then(res => res.ok ? res.text() : "")
+                .then(res => {
+                    if (res.ok) { successCount++; return res.text(); }
+                    return "";
+                })
                 .then(text => {
                     if (text) {
                         let parsed = parsePzemCsv(text);
                         rawData = rawData.concat(parsed);
                     }
                 })
-                .catch(() => {}) // Lewati jika ada file tanggal tertentu yang belum di-upload/kosong
+                .catch(() => {}) // Abaikan jika jam tertentu datanya kosong/belum dibuat
         );
 
         Promise.all(fetchPromises).then(() => {
             if (rawData.length > 0) {
+                // Urutkan data gabungan secara kronologis waktu (Timestamp)
+                rawData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
                 alertBox.className = "alert alert-success text-center fw-bold shadow-sm";
-                alertBox.innerText = `✅ Sukses mengonsolidasi ${rawData.length} data baris berdasarkan filter Anda.`;
+                alertBox.innerText = `✅ Berhasil mematangkan data dari ${successCount} file jam kerja dengan total ${rawData.length} baris log.`;
                 destroyExistingCharts();
                 renderDashboard();
             } else {
                 alertBox.className = "alert alert-danger text-center fw-bold shadow-sm";
-                alertBox.innerText = `❌ Gagal: Tidak ada data berkas log yang ditemukan untuk parameter tanggal tersebut.`;
+                alertBox.innerText = `❌ Gagal: Tidak ada berkas log jam kerja berformat log_YYYYMMDD_HH.txt yang ditemukan pada parameter ini.`;
             }
         });
     }
 
-    // Memicu render ulang visual jika menu dropdown diganti tanpa perlu re-fetch file kembali
     document.getElementById('selectedId').addEventListener('change', () => {
         if(rawData.length > 0) { destroyExistingCharts(); renderDashboard(); }
     });
@@ -292,10 +312,11 @@
         document.getElementById('sectionSemuaCarbon').className = "hidden-section";
         document.getElementById('sectionIndividual').className = "hidden-section";
 
-        const labelsX = [...new Set(rawData.map(item => item.time))].sort();
+        // Mengambil sumbu X unik berdasarkan kombinasi Tanggal + Jam/Menit agar tidak tumpang tindih
+        const labelsX = [...new Set(rawData.map(item => item.time))];
         let carbonMultiplier = mode === "harian" ? (0.85 / 60) : (mode === "bulanan" ? (0.85 * 24) : 0.85);
 
-        if (currentMenu === "Semua_Watt") {
+        if (currentMenu === "Semua_Watt" || currentMenu === "Semua") {
             document.getElementById('sectionSemuaWatt').className = "display-block";
             for (let id = 1; id <= 30; id++) {
                 const canvas = document.getElementById(`chartWatt_${id}`); if (!canvas) continue;
@@ -379,7 +400,6 @@
         if(target) target.innerText = Math.round(intensitas).toLocaleString('id-ID');
     }
 
-    // Triger inisialisasi awal sistem saat pertama kali dimuat
     window.onload = function() {
         updateFileLabel();
         loadLogData();
