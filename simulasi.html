@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulasi Optimasi Tarif Listrik UNESA</title>
-    <!-- Bootstrap 5 CSS & FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
@@ -15,40 +14,59 @@
         .saving-badge { font-size: 0.9rem; font-weight: bold; }
         .table-responsive { max-height: 500px; overflow-y: auto; }
         .idpel-text { font-size: 0.8rem; color: #6c757d; font-family: 'Courier New', Courier, monospace; font-weight: bold; }
+        .badge-tarif { font-size: 0.75rem; font-weight: bold; padding: 3px 6px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="container-fluid px-4 py-4">
-    <!-- Header Utama -->
     <div class="card bg-gradient-sim p-4 text-center mb-4 shadow">
         <h1 class="fw-bold"><i class="fa-solid fa-sliders"></i> Simulator Pergeseran Beban Energi (Load Shifting)</h1>
-        <p class="mb-0 opacity-75">Simulasi Finansial Penghematan Tagihan: Memindahkan Konsumsi WBP ke LWBP — UNESA 2026</p>
+        <p class="mb-0 opacity-75">Simulasi Finansial Penghematan Tagihan Berdasarkan Multi-Golongan Tarif PLN — UNESA 2026</p>
     </div>
 
-    <!-- Parameter Tarif Ketetapan -->
     <div class="card p-3 mb-4 bg-light">
-        <div class="row text-center g-3">
-            <div class="col-md-4">
-                <div class="p-2 border rounded bg-white">
-                    <small class="text-muted d-block fw-bold">TARIF LWBP (02.00 - 17.00 & 22.00 - 02.00)</small>
-                    <span class="fs-5 fw-bold text-primary">Rp 735 / kWh</span>
+        <div class="row align-items-center g-3">
+            <div class="col-xl-8 col-lg-7">
+                <div class="row g-2 text-center">
+                    <div class="col-6 col-sm-3">
+                        <div class="p-2 border rounded bg-white shadow-sm">
+                            <span class="badge bg-primary mb-1">S1 (Sosial)</span>
+                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">Rp 900,00</div>
+                            <small class="text-muted" style="font-size: 0.75rem;">WBP: Rp 1.350,00</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <div class="p-2 border rounded bg-white shadow-sm">
+                            <span class="badge bg-success mb-1">S2 (Sosial Menengah)</span>
+                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">Rp 735,00</div>
+                            <small class="text-muted" style="font-size: 0.75rem;">WBP: Rp 1.102,50</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <div class="p-2 border rounded bg-white shadow-sm">
+                            <span class="badge bg-danger mb-1">P1 (Pemerintah)</span>
+                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">Rp 1.699,53</div>
+                            <small class="text-muted" style="font-size: 0.75rem;">WBP: Rp 2.549,30</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <div class="p-2 border rounded bg-white shadow-sm">
+                            <span class="badge bg-warning text-dark mb-1">B2 (Bisnis)</span>
+                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">Rp 1.444,70</div>
+                            <small class="text-muted" style="font-size: 0.75rem;">WBP: Rp 2.167,05</small>
+                        </div>
+                    </div>
                 </div>
+                <small class="text-muted d-block mt-2 text-center text-sm-start"><i class="fa-solid fa-info-circle"></i> Jam Kerja LWBP: 02.00-17.00 & 22.00-02.00 | WBP (Beban Puncak Pengali 1.5x): 17.00-22.00</small>
             </div>
-            <div class="col-md-4">
-                <div class="p-2 border rounded bg-white">
-                    <small class="text-muted d-block fw-bold">TARIF WBP (17.00 - 22.00)</small>
-                    <span class="fs-5 fw-bold text-warning">Rp 1.102,5 / kWh</span>
-                </div>
-            </div>
-            <div class="col-md-4 text-end d-flex align-items-center justify-content-center justify-content-md-end">
+            <div class="col-xl-4 col-lg-5 text-end border-start-lg d-flex align-items-center justify-content-center justify-content-lg-end">
                 <a href="ktt_juni26.html" class="btn btn-outline-primary fw-bold me-2"><i class="fa-solid fa-chart-pie"></i> Dashboard Utama</a>
                 <a href="index.html" class="btn btn-secondary fw-bold"><i class="fa-solid fa-home"></i> Menu</a>
             </div>
         </div>
     </div>
 
-    <!-- Hasil Finansial Global -->
     <div class="row">
         <div class="col-md-4">
             <div class="card p-4 text-center border-start border-primary border-5">
@@ -73,60 +91,62 @@
         </div>
     </div>
 
-    <!-- Tabel Kontrol Geser Per Gedung -->
     <div class="card p-4">
         <h5 class="fw-bold mb-3 text-secondary"><i class="fa-solid fa-building-gear"></i> Pengaturan Kontrol Beban per Gedung / Meter</h5>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-dark sticky-top">
                     <tr>
-                        <th style="width: 30%;">Nama Gedung & IDPEL PLN</th>
-                        <th style="width: 15%;">Kondisi Awal (kWh)</th>
+                        <th style="width: 28%;">Nama Gedung & IDPEL PLN</th>
+                        <th style="width: 20%;">Kondisi Awal & Penanda Harga</th>
                         <th style="width: 32%;">Simulasi Pergeseran WBP ke LWBP</th>
-                        <th style="width: 23%; text-align: right;">Estimasi Tagihan & Hemat</th>
+                        <th style="width: 20%; text-align: right;">Estimasi Tagihan & Hemat</th>
                     </tr>
                 </thead>
                 <tbody id="simulationTableBody">
-                    <!-- Data di-generate otomatis via JS -->
-                </tbody>
+                    </tbody>
             </table>
         </div>
     </div>
 </div>
 
 <script>
-    // Konstanta Tarif PLN S-3/TM
-    const TARIF_LWBP = 735;
-    const TARIF_WBP = 1102.5;
+    // Struktur Database Golongan Tarif PLN
+    const TARIF_MASTER = {
+        "S1": { lwbp: 900.00, wbp: 900.00 * 1.5, badge: "bg-primary text-white" },
+        "S2": { lwbp: 735.00, wbp: 735.00 * 1.5, badge: "bg-success text-white" },
+        "P1": { lwbp: 1699.53, wbp: 1699.53 * 1.5, badge: "bg-danger text-white" },
+        "B2": { lwbp: 1444.70, wbp: 1444.70 * 1.5, badge: "bg-warning text-dark" }
+    };
 
-    // Database Riil Juni 2026 UNESA dengan Penambahan IDPEL 12-Digit PLN
+    // Database Riil Juni 2026 UNESA lengkap dengan kode Golongan Tarif per meteran
     const dataGedung = [
-        { id: 1, idpel: "512010234561", nama: "Kolam Renang Unesa", lwbp: 18591, wbp: 0, denda: 0 },
-        { id: 2, idpel: "512010234562", nama: "Asrama Unesa", lwbp: 12576, wbp: 0, denda: 0 },
-        { id: 3, idpel: "512010234563", nama: "PPG Unesa", lwbp: 34818, wbp: 5031, denda: 7529500 },
-        { id: 4, idpel: "512010234564", nama: "Sport Science", lwbp: 7893, wbp: 0, denda: 0 },
-        { id: 5, idpel: "512010234565", nama: "SMP Laboratorium Unesa", lwbp: 27914, wbp: 2234, denda: 19340825 },
-        { id: 6, idpel: "512010234566", nama: "Unesa Gedung Pendidikan", lwbp: 118102, wbp: 15938, denda: 11911225 },
-        { id: 7, idpel: "512010234567", nama: "Asrama Putri 1 Unesa", lwbp: 23809, wbp: 0, denda: 0 },
-        { id: 8, idpel: "512010234568", nama: "Asrama Putri 2 Unesa", lwbp: 8202, wbp: 0, denda: 0 },
-        { id: 9, idpel: "512010234569", nama: "Gedung Futsal Unesa", lwbp: 15641, wbp: 0, denda: 0 },
-        { id: 10, idpel: "512010234570", nama: "Gedung CPD Unesa", lwbp: 76957, wbp: 11433, denda: 7085500 },
-        { id: 11, idpel: "512010234571", nama: "Gedung Fakultas Seni Unesa", lwbp: 28625, wbp: 3399, denda: 12802000 },
-        { id: 12, idpel: "512010234572", nama: "Gedung Perpustakaan Unesa", lwbp: 39595, wbp: 5726, denda: 15620475 },
-        { id: 13, idpel: "512010234573", nama: "Gedung Basket Indoor", lwbp: 8245, wbp: 0, denda: 0 },
-        { id: 14, idpel: "512010234574", nama: "Rusun Unesa Surabaya", lwbp: 17362, wbp: 0, denda: 0 },
-        { id: 15, idpel: "512010234575", nama: "Lab Anti Dopping Unesa", lwbp: 21453, wbp: 2917, denda: 24671600 },
-        { id: 16, idpel: "512010234576", nama: "Gedung Psikologi Unesa", lwbp: 32512, wbp: 3446, denda: 9376725 },
-        { id: 17, idpel: "512010234577", nama: "G. Kuliah Bersama OR dan Kes", lwbp: 14634, wbp: 0, denda: 0 },
-        { id: 18, idpel: "512010234578", nama: "FIKK Gedung U1/U2", lwbp: 49706, wbp: 0, denda: 0 },
-        { id: 19, idpel: "512010234579", nama: "Gedung Sawunggaling Unesa", lwbp: 15304, wbp: 0, denda: 0 },
-        { id: 20, idpel: "512011234501", nama: "IKIP / Universitas Negeri Surabaya", lwbp: 63252, wbp: 9274, denda: 0 },
-        { id: 21, idpel: "512011234502", nama: "UNIV P3B-UNESA / Laboratorium", lwbp: 7413, wbp: 0, denda: 0 },
-        { id: 22, idpel: "512011234503", nama: "Kampus UNESA (Ketintang)", lwbp: 2952, wbp: 0, denda: 0 },
-        { id: 23, idpel: "512011234504", nama: "BUSEM UNESA", lwbp: 1827, wbp: 0, denda: 0 },
-        { id: 24, idpel: "512011234505", nama: "Gedung Pusat Nalar UNESA", lwbp: 2391, wbp: 0, denda: 0 },
-        { id: 25, idpel: "512011234506", nama: "Gedung UNESA Science", lwbp: 12546, wbp: 1148, denda: 0 },
-        { id: 26, idpel: "512011234507", nama: "Gedung UKM Center", lwbp: 656, wbp: 0, denda: 0 }
+        { id: 1, idpel: "512010234561", nama: "Kolam Renang Unesa", gol: "S2", lwbp: 18591, wbp: 0, denda: 0 },
+        { id: 2, idpel: "512010234562", nama: "Asrama Unesa", gol: "S2", lwbp: 12576, wbp: 0, denda: 0 },
+        { id: 3, idpel: "512010234563", nama: "PPG Unesa", gol: "P1", lwbp: 34818, wbp: 5031, denda: 7529500 },
+        { id: 4, idpel: "512010234564", nama: "Sport Science", gol: "S2", lwbp: 7893, wbp: 0, denda: 0 },
+        { id: 5, idpel: "512010234565", nama: "SMP Laboratorium Unesa", gol: "P1", lwbp: 27914, wbp: 2234, denda: 19340825 },
+        { id: 6, idpel: "512010234566", nama: "Unesa Gedung Pendidikan", gol: "P1", lwbp: 118102, wbp: 15938, denda: 11911225 },
+        { id: 7, idpel: "512010234567", nama: "Asrama Putri 1 Unesa", gol: "S2", lwbp: 23809, wbp: 0, denda: 0 },
+        { id: 8, idpel: "512010234568", nama: "Asrama Putri 2 Unesa", gol: "S2", lwbp: 8202, wbp: 0, denda: 0 },
+        { id: 9, idpel: "512010234569", nama: "Gedung Futsal Unesa", gol: "S2", lwbp: 15641, wbp: 0, denda: 0 },
+        { id: 10, idpel: "512010234570", nama: "Gedung CPD Unesa", gol: "B2", lwbp: 76957, wbp: 11433, denda: 7085500 },
+        { id: 11, idpel: "512010234571", nama: "Gedung Fakultas Seni Unesa", gol: "P1", lwbp: 28625, wbp: 3399, denda: 12802000 },
+        { id: 12, idpel: "512010234572", nama: "Gedung Perpustakaan Unesa", gol: "P1", lwbp: 39595, wbp: 5726, denda: 15620475 },
+        { id: 13, idpel: "512010234573", nama: "Gedung Basket Indoor", gol: "S2", lwbp: 8245, wbp: 0, denda: 0 },
+        { id: 14, idpel: "512010234574", nama: "Rusun Unesa Surabaya", gol: "S1", lwbp: 17362, wbp: 0, denda: 0 },
+        { id: 15, idpel: "512010234575", nama: "Lab Anti Dopping Unesa", gol: "B2", lwbp: 21453, wbp: 2917, denda: 24671600 },
+        { id: 16, idpel: "512010234576", nama: "Gedung Psikologi Unesa", gol: "P1", lwbp: 32512, wbp: 3446, denda: 9376725 },
+        { id: 17, idpel: "512010234577", nama: "G. Kuliah Bersama OR dan Kes", gol: "S2", lwbp: 14634, wbp: 0, denda: 0 },
+        { id: 18, idpel: "512010234578", nama: "FIKK Gedung U1/U2", gol: "S2", lwbp: 49706, wbp: 0, denda: 0 },
+        { id: 19, idpel: "512010234579", nama: "Gedung Sawunggaling Unesa", gol: "S2", lwbp: 15304, wbp: 0, denda: 0 },
+        { id: 20, idpel: "512011234501", nama: "IKIP / Universitas Negeri Surabaya", gol: "P1", lwbp: 63252, wbp: 9274, denda: 0 },
+        { id: 21, idpel: "512011234502", nama: "UNIV P3B-UNESA / Laboratorium", gol: "P1", lwbp: 7413, wbp: 0, denda: 0 },
+        { id: 22, idpel: "512011234503", nama: "Kampus UNESA (Ketintang)", gol: "P1", lwbp: 2952, wbp: 0, denda: 0 },
+        { id: 23, idpel: "512011234504", nama: "BUSEM Unesa", gol: "S2", lwbp: 1827, wbp: 0, denda: 0 },
+        { id: 24, idpel: "512011234505", nama: "Gedung Pusat Nalar UNESA", gol: "P1", lwbp: 2391, wbp: 0, denda: 0 },
+        { id: 25, idpel: "512011234506", nama: "Gedung UNESA Science", gol: "B2", lwbp: 12546, wbp: 1148, denda: 0 },
+        { id: 26, idpel: "512011234507", nama: "Gedung UKM Center", gol: "S2", lwbp: 656, wbp: 0, denda: 0 }
     ];
 
     let shiftState = {};
@@ -137,17 +157,24 @@
 
         dataGedung.forEach(g => {
             shiftState[g.id] = 0; 
-            let costAktualGedung = (g.lwbp * TARIF_LWBP) + (g.wbp * TARIF_WBP) + g.denda;
+            
+            // Ambil parameter tarif dinamis sesuai golongan gedung
+            let t = TARIF_MASTER[g.gol];
+            let costAktualGedung = (g.lwbp * t.lwbp) + (g.wbp * t.wbp) + g.denda;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
                     <span class="fw-bold d-block text-dark" style="font-size:0.95rem;">${g.nama}</span>
-                    <span class="idpel-text"><i class="fa-solid fa-bolt text-warning me-1"></i>IDPEL: ${g.idpel}</span>
+                    <span class="idpel-text"><i class="fa-solid fa-bolt text-warning me-1"></i> ${g.idpel}</span>
                 </td>
                 <td>
-                    <div style="font-size:0.85rem;">☀️ LWBP: <b>${g.lwbp.toLocaleString('id-ID')}</b></div>
-                    <div style="font-size:0.85rem;" class="${g.wbp > 0 ? 'text-warning fw-bold' : 'text-muted'}">🌙 WBP: <b>${g.wbp.toLocaleString('id-ID')}</b></div>
+                    <div class="mb-1">
+                        <span class="badge ${t.badge} badge-tarif">Gol: ${g.gol}</span>
+                        <small class="text-muted border-start ps-1" style="font-size:0.75rem;">Rp ${t.lwbp.toLocaleString('id-ID')}/kWh</small>
+                    </div>
+                    <div style="font-size:0.83rem;">☀️ LWBP: <b>${g.lwbp.toLocaleString('id-ID')}</b></div>
+                    <div style="font-size:0.83rem;" class="${g.wbp > 0 ? 'text-warning fw-bold' : 'text-muted'}">🌙 WBP: <b>${g.wbp.toLocaleString('id-ID')}</b></div>
                 </td>
                 <td>
                     <div class="d-flex justify-content-between slider-label mb-1">
@@ -173,13 +200,14 @@
         document.getElementById(`sliderVal_${id}`).innerText = `${val}%`;
         
         let g = dataGedung.find(item => item.id === id);
+        let t = TARIF_MASTER[g.gol];
         
         let kwhDipindah = g.wbp * (val / 100);
         let wbpBaru = g.wbp - kwhDipindah;
         let lwbpBaru = g.lwbp + kwhDipindah;
 
-        let costAwal = (g.lwbp * TARIF_LWBP) + (g.wbp * TARIF_WBP) + g.denda;
-        let costBaru = (lwbpBaru * TARIF_LWBP) + (wbpBaru * TARIF_WBP) + g.denda;
+        let costAwal = (g.lwbp * t.lwbp) + (g.wbp * t.wbp) + g.denda;
+        let costBaru = (lwbpBaru * t.lwbp) + (wbpBaru * t.wbp) + g.denda;
         let hemat = costAwal - costBaru;
 
         document.getElementById(`simCost_${g.id}`).innerText = `Rp ${Math.round(costBaru).toLocaleString('id-ID')}`;
@@ -201,7 +229,8 @@
         let globalKwh = 0;
 
         dataGedung.forEach(g => {
-            let costAwal = (g.lwbp * TARIF_LWBP) + (g.wbp * TARIF_WBP) + g.denda;
+            let t = TARIF_MASTER[g.gol];
+            let costAwal = (g.lwbp * t.lwbp) + (g.wbp * t.wbp) + g.denda;
             globalAktual += costAwal;
             globalKwh += (g.lwbp + g.wbp);
 
@@ -210,7 +239,7 @@
             let wbpBaru = g.wbp - kwhDipindah;
             let lwbpBaru = g.lwbp + kwhDipindah;
 
-            let costBaru = (lwbpBaru * TARIF_LWBP) + (wbpBaru * TARIF_WBP) + g.denda;
+            let costBaru = (lwbpBaru * t.lwbp) + (wbpBaru * t.wbp) + g.denda;
             globalSimulasi += costBaru;
         });
 
