@@ -195,7 +195,7 @@
                 renderLineChart(`chartWatt_${id}`, labelsX, dataPoints, '#3498db', 'rgba(52, 152, 219, 0.05)', 'Watt');
             }
         } 
-        elif (menu === "Semua_Arus") {
+        else if (menu === "Semua_Arus") {
             document.getElementById('sectionSemuaArus').className = "display-block";
             for (let id = 1; id <= 30; id++) {
                 let dataPoints = labelsX.map(x => {
@@ -205,7 +205,7 @@
                 renderLineChart(`chartArus_${id}`, labelsX, dataPoints, '#f1c40f', 'rgba(241, 196, 15, 0.05)', 'Ampere');
             }
         }
-        elif (menu === "Semua_Carbon") {
+        else if (menu === "Semua_Carbon") {
             document.getElementById('sectionSemuaCarbon').className = "display-block";
             for (let id = 1; id <= 30; id++) {
                 let dataPoints = labelsX.map(x => {
@@ -215,7 +215,7 @@
                 renderLineChart(`chartCarbon_${id}`, labelsX, dataPoints, '#2ecc71', 'rgba(46, 204, 113, 0.05)', 'gram CO₂');
             }
         }
-        elif (menu === "TOTAL") {
+        else if (menu === "TOTAL") {
             document.getElementById('sectionTotal').className = "display-block";
             let totalKwh = 0;
             let totalCarbonKg = 0;
