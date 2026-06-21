@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Optimasi Tarif Listrik UNESA</title>
+    <!-- Bootstrap 5 CSS & FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: none; border-radius: 12px; margin-bottom: 25px; }
+        .bg-gradient-sim { background: linear-gradient(135deg, #1e3c72 0%, #2b5283 100%); color: white; }
+        .slider-label { font-size: 0.85rem; font-weight: 600; color: #495057; }
+        .saving-badge { font-size: 0.9rem; font-weight: bold; }
+        .table-responsive { max-height: 500px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-4 py-4">
+    <!-- Header Utama -->
+    <div class="card bg-gradient-sim p-4 text-center mb-4 shadow">
+        <h1 class="fw-bold"><i class="fa-solid fa-sliders"></i> Simulator Pergeseran Beban Energi (Load Shifting)</h1>
+        <p class="mb-0 opacity-75">Simulasi Finansial Penghematan Tagihan: Memindahkan Konsumsi WBP ke LWBP — UNESA 2026</p>
+    </div>
+
+    <!-- Parameter Tarif Ketetapan -->
+    <div class="card p-3 mb-4 bg-light">
+        <div class="row text-center g-3">
+            <div class="col-md-4">
+                <div class="p-2 border rounded bg-white">
+                    <small class="text-muted d-block fw-bold">TARIF LWBP (02.00 - 17.00 & 22.00 - 02.00)</small>
+                    <span class="fs-5 fw-bold text-primary">Rp 735 / kWh</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-2 border rounded bg-white">
+                    <small class="text-muted d-block fw-bold">TARIF WBP (17.00 - 22.00)</small>
+                    <span class="fs-5 fw-bold text-warning">Rp 1.102,5 / kWh</span>
+                </div>
+            </div>
+            <div class="col-md-4 text-end d-flex align-items-center justify-content-center justify-content-md-end">
+                <a href="ktt_juni26.html" class="btn btn-outline-primary fw-bold me-2"><i class="fa-solid fa-chart-pie"></i> Dashboard Utama</a>
+                <a href="index.html" class="btn btn-secondary fw-bold"><i class="fa-solid fa-home"></i> Menu</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hasil Finansial Global -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card p-4 text-center border-start border-primary border-5">
+                <h6 class="text-muted fw-bold">TOTAL TAGIHAN AKTUAL</h6>
+                <h3 class="fw-bold text-dark" id="totalAktual">Rp 0</h3>
+                <small class="text-muted" id="kwhAktual">0 kWh</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 text-center border-start border-success border-5">
+                <h6 class="text-muted fw-bold">ESTIMASI TAGIHAN BARU</h6>
+                <h3 class="fw-bold text-success" id="totalSimulasi">Rp 0</h3>
+                <small class="text-muted">Pasca Optimalisasi Operasional</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 text-center border-start border-danger border-5 bg-white">
+                <h6 class="text-muted fw-bold">TOTAL POTENSI PENGHEMATAN</h6>
+                <h3 class="fw-bold text-danger" id="totalHemat">Rp 0</h3>
+                <span class="badge bg-danger mx-auto saving-badge px-3 py-2 mt-1" id="pctHemat">0% Terpangkas</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabel Kontrol Geser Per Gedung -->
+    <div class="card p-4">
+        <h5 class="fw-bold mb-3 text-secondary"><i class="fa-solid fa-building-gear"></i> Pengaturan Kontrol Beban per Gedung / Meter</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark sticky-top">
+                    <tr>
+                        <th style="width: 25%;">Nama Gedung / Hub</th>
+                        <th style="width: 15%;">Kondisi Awal (kWh)</th>
+                        <th style="width: 35%;">Simulasi Pergeseran WBP ke LWBP</th>
+                        <th style="width: 25%; text-align: right;">Estimasi Tagihan & Hemat</th>
+                    </tr>
+                </thead>
+                <tbody id="simulationTableBody">
+                    <!-- Data di-generate otomatis via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Konstanta Tarif PLN S-3/TM
+    const TARIF_LWBP = 735;
+    const TARIF_WBP = 1102.5;
+
+    // Database Riil Juni 2026 UNESA
+    const dataGedung = [
+        { id: 1, nama: "Kolam Renang Unesa", lwbp: 18591, wbp: 0, denda: 0 },
+        { id: 2, nama: "Asrama Unesa", lwbp: 12576, wbp: 0, denda: 0 },
+        { id: 3, nama: "PPG Unesa", lwbp: 34818, wbp: 5031, denda: 7529500 },
+        { id: 4, nama: "Sport Science", lwbp: 7893, wbp: 0, denda: 0 },
+        { id: 5, nama: "SMP Laboratorium Unesa", lwbp: 27914, wbp: 2234, denda: 19340825 },
+        { id: 6, nama: "Unesa Gedung Pendidikan", lwbp: 118102, wbp: 15938, denda: 11911225 },
+        { id: 7, nama: "Asrama Putri 1 Unesa", lwbp: 23809, wbp: 0, denda: 0 },
+        { id: 8, nama: "Asrama Putri 2 Unesa", lwbp: 8202, wbp: 0, denda: 0 },
+        { id: 9, nama: "Gedung Futsal Unesa", lwbp: 15641, wbp: 0, denda: 0 },
+        { id: 10, nama: "Gedung CPD Unesa", lwbp: 76957, wbp: 11433, denda: 7085500 },
+        { id: 11, nama: "Gedung Fakultas Seni Unesa", lwbp: 28625, wbp: 3399, denda: 12802000 },
+        { id: 12, nama: "Gedung Perpustakaan Unesa", lwbp: 39595, wbp: 5726, denda: 15620475 },
+        { id: 13, nama: "Gedung Basket Indoor", lwbp: 8245, wbp: 0, denda: 0 },
+        { id: 14, nama: "Rusun Unesa Surabaya", lwbp: 17362, wbp: 0, denda: 0 },
+        { id: 15, nama: "Lab Anti Dopping Unesa", lwbp: 21453, wbp: 2917, denda: 24671600 },
+        { id: 16, nama: "Gedung Psikologi Unesa", lwbp: 32512, wbp: 3446, denda: 9376725 },
+        { id: 17, nama: "G. Kuliah Bersama OR dan Kes", lwbp: 14634, wbp: 0, denda: 0 },
+        { id: 18, nama: "FIKK Gedung U1/U2", lwbp: 49706, wbp: 0, denda: 0 },
+        { id: 19, nama: "Gedung Sawunggaling Unesa", lwbp: 15304, wbp: 0, denda: 0 },
+        { id: 20, nama: "IKIP / Universitas Negeri Surabaya", lwbp: 63252, wbp: 9274, denda: 0 },
+        { id: 21, nama: "UNIV P3B-UNESA / Laboratorium", lwbp: 7413, wbp: 0, denda: 0 },
+        { id: 22, nama: "Kampus UNESA (Ketintang)", lwbp: 2952, wbp: 0, denda: 0 },
+        { id: 23, nama: "BUSEM UNESA", lwbp: 1827, wbp: 0, denda: 0 },
+        { id: 24, nama: "Gedung Pusat Nalar UNESA", lwbp: 2391, wbp: 0, denda: 0 },
+        { id: 25, nama: "Gedung UNESA Science", lwbp: 12546, wbp: 1148, denda: 0 },
+        { id: 26, nama: "Gedung UKM Center", lwbp: 656, wbp: 0, denda: 0 }
+    ];
+
+    // Array penyimpan nilai mutasi geser (perubahan % WBP yang di-shift ke LWBP)
+    let shiftState = {};
+
+    function initSimulation() {
+        const tbody = document.getElementById('simulationTableBody');
+        tbody.innerHTML = '';
+
+        dataGedung.forEach(g => {
+            shiftState[g.id] = 0; // default awal: 0% beban dipindah
+
+            // Hitung biaya dasar aktual awal
+            let costAktualGedung = (g.lwbp * TARIF_LWBP) + (g.wbp * TARIF_WBP) + g.denda;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <span class="fw-bold d-block text-dark" style="font-size:0.95rem;">${g.nama}</span>
+                    <small class="badge bg-secondary p-1" style="font-size:11px;">Mtr-ID: 0${g.id}</small>
+                </td>
+                <td>
+                    <div style="font-size:0.85rem;">☀️ LWBP: <b>${g.lwbp.toLocaleString('id-ID')}</b></div>
+                    <div style="font-size:0.85rem;" class="${g.wbp > 0 ? 'text-warning fw-bold' : 'text-muted'}">🌙 WBP: <b>${g.wbp.toLocaleString('id-ID')}</b></div>
+                </td>
+                <td>
+                    <div class="d-flex justify-content-between slider-label mb-1">
+                        <span>Pindahkan Beban WBP ke Siang/Malam:</span>
+                        <span class="text-primary fw-bold" id="sliderVal_${g.id}">0%</span>
+                    </div>
+                    <input type="range" class="form-range" min="0" max="100" value="0" step="5" 
+                           id="slider_${g.id}" oninput="updateGedungShift(${g.id}, this.value)" ${g.wbp === 0 ? 'disabled' : ''}>
+                    <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">
+                        <span>0% (Tetap)</span>
+                        <span>50%</span>
+                        <span>100% (Full Shift)</span>
+                    </div>
+                </td>
+                <td class="text-end">
+                    <div class="fw-bold text-dark" id="simCost_${g.id}">Rp ${Math.round(costAktualGedung).toLocaleString('id-ID')}</div>
+                    <small class="text-success fw-bold d-none" id="simSave_${g.id}"><i class="fa-solid fa-circle-arrow-down"></i> Hemat: Rp 0</small>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        calculateGlobalTotals();
+    }
+
+    function updateGedungShift(id, val) {
+        shiftState[id] = parseFloat(val);
+        document.getElementById(`sliderVal_${id}`).innerText = `${val}%`;
+        
+        // Cari data gedung terkait
+        let g = dataGedung.find(item => item.id === id);
+        
+        // Kalkulasi pergeseran kWh
+        let kwhDipindah = g.wbp * (val / 100);
+        let wbpBaru = g.wbp - kwhDipindah;
+        let lwbpBaru = g.lwbp + kwhDipindah;
+
+        // Hitung perbedaan finansial
+        let costAwal = (g.lwbp * TARIF_LWBP) + (g.wbp * TARIF_WBP) + g.denda;
+        let costBaru = (lwbpBaru * TARIF_LWBP) + (wbpBaru * TARIF_WBP) + g.denda;
+        let hemat = costAwal - costBaru;
+
+        // Update Kolom Dom Gedung
+        document.getElementById(`simCost_${g.id}`).innerText = `Rp ${Math.round(costBaru).toLocaleString('id-ID')}`;
+        
+        let saveBadge = document.getElementById(`simSave_${g.id}`);
+        if (hemat > 0) {
+            saveBadge.classList.remove('d-none');
+            saveBadge.innerHTML = `<i class="fa-solid fa-arrow-trend-down"></i> Hemat: Rp ${Math.round(hemat).toLocaleString('id-ID')}`;
+        } else {
+            saveBadge.classList.add('d-none');
+        }
+
+        calculateGlobalTotals();
+    }
+
+    function calculateGlobalTotals() {
+        let globalAktual = 0;
+        let globalSimulasi = 0;
+        let globalKwh = 0;
+
+        dataGedung.forEach(g => {
+            let costAwal = (g.lwbp * TARIF_LWBP) + (g.wbp * TARIF_WBP) + g.denda;
+            globalAktual += costAwal;
+            globalKwh += (g.lwbp + g.wbp);
+
+            // Hitung kondisi baru berdasarkan state slider
+            let pct = shiftState[g.id] || 0;
+            let kwhDipindah = g.wbp * (pct / 100);
+            let wbpBaru = g.wbp - kwhDipindah;
+            let lwbpBaru = g.lwbp + kwhDipindah;
+
+            let costBaru = (lwbpBaru * TARIF_LWBP) + (wbpBaru * TARIF_WBP) + g.denda;
+            globalSimulasi += costBaru;
+        });
+
+        let totalSaves = globalAktual - globalSimulasi;
+        let pctSaves = globalAktual > 0 ? ((totalSaves / globalAktual) * 100).toFixed(2) : 0;
+
+        // Render Metrik Atas
+        document.getElementById('totalAktual').innerText = `Rp ${Math.round(globalAktual).toLocaleString('id-ID')}`;
+        document.getElementById('kwhAktual').innerText = `Total Konsumsi Jaringan: ${Math.round(globalKwh).toLocaleString('id-ID')} kWh`;
+        
+        document.getElementById('totalSimulasi').innerText = `Rp ${Math.round(globalSimulasi).toLocaleString('id-ID')}`;
+        document.getElementById('totalHemat').innerText = `Rp ${Math.round(totalSaves).toLocaleString('id-ID')}`;
+        document.getElementById('pctHemat').innerText = `${pctSaves}% Biaya Terpangkas`;
+    }
+
+    window.addEventListener('DOMContentLoaded', initSimulation);
+</script>
+</body>
+</html>
