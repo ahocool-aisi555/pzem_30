@@ -23,19 +23,19 @@
             overflow: hidden;
         }
         .brand-header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2ecc71 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #157347 100%);
             padding: 40px 20px;
             color: white;
             text-align: center;
         }
         .logo-container img {
-            width: 120px;
-            height: 120px;
-            filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.2));
+            width: 160px;
+            height: auto;
+            filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.25));
             transition: transform 0.3s ease;
         }
         .logo-container img:hover {
-            transform: scale(1.05) rotate(5deg);
+            transform: scale(1.05);
         }
         .menu-link {
             display: flex;
@@ -52,10 +52,10 @@
         }
         .menu-link:hover {
             background-color: #f9fbf9;
-            border-color: #2ecc71;
+            border-color: #198754;
             color: #1e3c72;
             transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.15);
+            box-shadow: 0 4px 12px rgba(25, 135, 84, 0.15);
         }
         .menu-icon {
             font-size: 1.7rem;
@@ -64,7 +64,7 @@
             text-align: center;
         }
         .text-unesa-blue { color: #1e3c72; }
-        .text-energy-green { color: #2ecc71; }
+        .text-energy-green { color: #198754; }
         .footer-text {
             font-size: 0.85rem;
             color: #7f8c8d;
@@ -82,7 +82,31 @@
             <div class="card landing-card">
                 <div class="brand-header">
                     <div class="logo-container mb-3">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjUsNSIvPgogIDxwYXRoIGQ9Ik01MCA1IEMyNSA1IDI1IDUwIDUwIDk1IEM3NSA1MCA3NSA1IDUwIDUiIGZpbGw9IiMxZTNjNzIiIG9wYWNpdHk9IjAuOSIvPgogIDxwYXRoIGQ9Ik01MCA1IEM3NSA1IDc1IDUwIDUwIDk1IEMyNSA1MCAyNSA1IDUwIDUiIGZpbGw9IiMyZWNjNzEiIG9wYWNpdHk9IjAuODUiLz4KICA8cGF0aCBkPSJNNDAgNDAgTDUwIDI1IEw2MCA0MCBMNDUgNDAgTDU1IDYwIEw0NSA2MCBMNTAgNzUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmQiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPg==" alt="Logo Unesa Green Energy">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMTIwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCI+Cjwvc3ZnPg==" alt="Logo Resmi UNESA Green Energy" style="display:none;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130" width="160">
+                          <defs>
+                            <linearGradient id="greenEnergyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stop-color="#ffffff"/>
+                              <stop offset="100%" stop-color="#2ecc71"/>
+                            </linearGradient>
+                          </defs>
+                          <g fill="url(#greenEnergyGrad)" opacity="0.95">
+                            <path d="M70,100 C50,90 35,70 35,50 C35,35 45,25 50,20 C42,28 30,42 30,55 C30,72 48,92 70,100 Z"/>
+                            <path d="M73,92 C55,83 42,65 42,48 C42,35 50,25 55,20 C48,27 38,39 38,51 C38,67 53,85 73,92 Z"/>
+                            <path d="M76,84 C61,76 50,60 50,45 C50,34 56,26 60,22 C54,28 46,38 46,49 C46,62 59,77 76,84 Z"/>
+                            <path d="M80,75 C68,68 58,54 58,41 C58,32 63,25 66,22 C61,27 54,36 54,45 C54,56 66,69 80,75 Z"/>
+                          </g>
+                          <g fill="url(#greenEnergyGrad)" opacity="0.95">
+                            <path d="M130,100 C150,90 165,70 165,50 C165,35 155,25 150,20 C158,28 170,42 170,55 C170,72 152,92 130,100 Z"/>
+                            <path d="M127,92 C145,83 158,65 158,48 C158,35 150,25 145,20 C152,27 162,39 162,51 C162,67 147,85 127,92 Z"/>
+                            <path d="M124,84 C139,76 150,60 150,45 C150,34 144,26 140,22 C146,28 154,38 154,49 C154,62 141,77 124,84 Z"/>
+                            <path d="M120,75 C132,68 142,54 142,41 C142,32 137,25 134,22 C139,27 146,36 146,45 C146,56 134,69 120,75 Z"/>
+                          </g>
+                          <path d="M96,100 L98,25 L100,10 L102,25 L104,100 Z" fill="#ffffff"/>
+                          <polygon points="100,5 96,12 104,12" fill="#f1c40f"/>
+                          <path d="M70,100 C85,108 115,108 130,100 C115,102 85,102 70,100 Z" fill="#ffffff"/>
+                          <polygon points="100,40 94,57 99,57 97,75 106,53 101,53" fill="#f1c40f"/>
+                          <text x="100" y="122" fill="#ffffff" font-family="'Segoe UI',Arial,sans-serif" font-weight="bold" font-size="16" text-anchor="middle" letter-spacing="3">UNESA</text>
+                        </svg>
                     </div>
                     <h3 class="fw-bold mb-1">UNIVERSITAS NEGERI SURABAYA</h3>
                     <p class="mb-0 opacity-75 fs-6">Unesa Smart Energy Ecosystem</p>
@@ -90,7 +114,7 @@
 
                 <div class="card-body p-4 p-sm-5">
                     <h4 class="text-center fw-bold mb-4 text-unesa-blue">
-                        <i class="fa-solid fa-gauge-high text-energy-green"></i> Laporan Online Penggunaan Energi
+                        <i class="fa-solid fa-square-poll-vertical text-energy-green"></i> Laporan Online Penggunaan Energi
                     </h4>
                     
                     <div class="menu-container">
@@ -118,7 +142,7 @@
                     </div>
 
                     <p class="footer-text mt-4 pt-3 border-top">
-                        <i class="fa-solid fa-shield-halved text-energy-green"></i> Dikembangkan oleh Tim Teknologi & Energi Hijau UNESA © 2026
+                        <i class="fa-solid fa-shield-halved text-energy-green"></i> Dikembangkan oleh Divisi Smart Energi UNESA © 2026
                     </p>
                 </div>
             </div>
