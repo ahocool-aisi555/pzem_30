@@ -125,40 +125,40 @@
 <script>
     // Struktur Database Golongan Tarif PLN
     const TARIF_MASTER = {
-        "S1": { lwbp: 900.00, wbp: 900.00 * 1.5, badge: "bg-primary text-white" },
-        "S2": { lwbp: 735.00, wbp: 735.00 * 1.5, badge: "bg-success text-white" },
-        "P1": { lwbp: 1699.53, wbp: 1699.53 * 1.5, badge: "bg-danger text-white" },
-        "B2": { lwbp: 1444.70, wbp: 1444.70 * 1.5, badge: "bg-warning text-dark" }
+        "S1": { lwbp: 900.00, wbp: 0, badge: "bg-primary text-white" },
+        "S2": { lwbp: 735.00, wbp: 1102.5, badge: "bg-success text-white" },
+        "P1": { lwbp: 1699.53, wbp: 0, badge: "bg-danger text-white" },
+        "B2": { lwbp: 1444.70, wbp: 0, badge: "bg-warning text-dark" }
     };
 
     // Database Riil Juni 2026 UNESA dengan Nilai Denda Komponen KVArh asli
     const dataGedung = [
-        { id: 1, idpel: "512010234561", nama: "Kolam Renang Unesa", gol: "S2", lwbp: 18591, wbp: 0, denda: 0 },
-        { id: 2, idpel: "512010234562", nama: "Asrama Unesa", gol: "S2", lwbp: 12576, wbp: 0, denda: 0 },
-        { id: 3, idpel: "512010234563", nama: "PPG Unesa", gol: "P1", lwbp: 34818, wbp: 5031, denda: 7529500 },
-        { id: 4, idpel: "512010234564", nama: "Sport Science", gol: "S2", lwbp: 7893, wbp: 0, denda: 0 },
-        { id: 5, idpel: "512010234565", nama: "SMP Laboratorium Unesa", gol: "P1", lwbp: 27914, wbp: 2234, denda: 19340825 },
-        { id: 6, idpel: "512010234566", nama: "Unesa Gedung Pendidikan", gol: "P1", lwbp: 118102, wbp: 15938, denda: 11911225 },
-        { id: 7, idpel: "512010234567", nama: "Asrama Putri 1 Unesa", gol: "S2", lwbp: 23809, wbp: 0, denda: 0 },
-        { id: 8, idpel: "512010234568", nama: "Asrama Putri 2 Unesa", gol: "S2", lwbp: 8202, wbp: 0, denda: 0 },
-        { id: 9, idpel: "512010234569", nama: "Gedung Futsal Unesa", gol: "S2", lwbp: 15641, wbp: 0, denda: 0 },
-        { id: 10, idpel: "512010234570", nama: "Gedung CPD Unesa", gol: "B2", lwbp: 76957, wbp: 11433, denda: 7085500 },
-        { id: 11, idpel: "512010234571", nama: "Gedung Fakultas Seni Unesa", gol: "P1", lwbp: 28625, wbp: 3399, denda: 12802000 },
-        { id: 12, idpel: "512010234572", nama: "Gedung Perpustakaan Unesa", gol: "P1", lwbp: 39595, wbp: 5726, denda: 15620475 },
-        { id: 13, idpel: "512010234573", nama: "Gedung Basket Indoor", gol: "S2", lwbp: 8245, wbp: 0, denda: 0 },
+        { id: 1, idpel: "512010234561", nama: "Kolam Renang Unesa", gol: "S1", lwbp: 18591, wbp: 0, denda: 0 },
+        { id: 2, idpel: "512010234562", nama: "Asrama Unesa", gol: "P1", lwbp: 12576, wbp: 0, denda: 0 },
+        { id: 3, idpel: "512010234563", nama: "PPG Unesa", gol: "S2", lwbp: 34818, wbp: 5031, denda: 7529500 },
+        { id: 4, idpel: "512010234564", nama: "Sport Science", gol: "S1", lwbp: 7893, wbp: 0, denda: 0 },
+        { id: 5, idpel: "512010234565", nama: "SMP Laboratorium Unesa", gol: "S2", lwbp: 27914, wbp: 2234, denda: 19340825 },
+        { id: 6, idpel: "512010234566", nama: "Unesa Gedung Pendidikan", gol: "S2", lwbp: 118102, wbp: 15938, denda: 11911225 },
+        { id: 7, idpel: "512010234567", nama: "Asrama Putri 1 Unesa", gol: "B2", lwbp: 23809, wbp: 0, denda: 0 },
+        { id: 8, idpel: "512010234568", nama: "Asrama Putri 2 Unesa", gol: "B2", lwbp: 8202, wbp: 0, denda: 0 },
+        { id: 9, idpel: "512010234569", nama: "Gedung Futsal Unesa", gol: "B2", lwbp: 15641, wbp: 0, denda: 0 },
+        { id: 10, idpel: "512010234570", nama: "Gedung CPD Unesa", gol: "S2", lwbp: 76957, wbp: 11433, denda: 7085500 },
+        { id: 11, idpel: "512010234571", nama: "Gedung Fakultas Seni Unesa", gol: "S2", lwbp: 28625, wbp: 3399, denda: 12802000 },
+        { id: 12, idpel: "512010234572", nama: "Gedung Perpustakaan Unesa", gol: "S2", lwbp: 39595, wbp: 5726, denda: 15620475 },
+        { id: 13, idpel: "512010234573", nama: "Gedung Basket Indoor", gol: "S1", lwbp: 8245, wbp: 0, denda: 0 },
         { id: 14, idpel: "512010234574", nama: "Rusun Unesa Surabaya", gol: "S1", lwbp: 17362, wbp: 0, denda: 0 },
-        { id: 15, idpel: "512010234575", nama: "Lab Anti Dopping Unesa", gol: "B2", lwbp: 21453, wbp: 2917, denda: 24671600 },
-        { id: 16, idpel: "512010234576", nama: "Gedung Psikologi Unesa", gol: "P1", lwbp: 32512, wbp: 3446, denda: 9376725 },
-        { id: 17, idpel: "512010234577", nama: "G. Kuliah Bersama OR dan Kes", gol: "S2", lwbp: 14634, wbp: 0, denda: 0 },
-        { id: 18, idpel: "512010234578", nama: "FIKK Gedung U1/U2", gol: "S2", lwbp: 49706, wbp: 0, denda: 0 },
-        { id: 19, idpel: "512010234579", nama: "Gedung Sawunggaling Unesa", gol: "S2", lwbp: 15304, wbp: 0, denda: 0 },
-        { id: 20, idpel: "512011234501", nama: "IKIP / Universitas Negeri Surabaya", gol: "P1", lwbp: 63252, wbp: 9274, denda: 0 },
-        { id: 21, idpel: "512011234502", nama: "UNIV P3B-UNESA / Laboratorium", gol: "P1", lwbp: 7413, wbp: 0, denda: 0 },
-        { id: 22, idpel: "512011234503", nama: "Kampus UNESA (Ketintang)", gol: "P1", lwbp: 2952, wbp: 0, denda: 0 },
-        { id: 23, idpel: "512011234504", nama: "BUSEM Unesa", gol: "S2", lwbp: 1827, wbp: 0, denda: 0 },
-        { id: 24, idpel: "512011234505", nama: "Gedung Pusat Nalar UNESA", gol: "P1", lwbp: 2391, wbp: 0, denda: 0 },
-        { id: 25, idpel: "512011234506", nama: "Gedung UNESA Science", gol: "B2", lwbp: 12546, wbp: 1148, denda: 0 },
-        { id: 26, idpel: "512011234507", nama: "Gedung UKM Center", gol: "S2", lwbp: 656, wbp: 0, denda: 0 }
+        { id: 15, idpel: "512010234575", nama: "Lab Anti Dopping Unesa", gol: "S2", lwbp: 21453, wbp: 2917, denda: 24671600 },
+        { id: 16, idpel: "512010234576", nama: "Gedung Psikologi Unesa", gol: "S2", lwbp: 32512, wbp: 3446, denda: 9376725 },
+        { id: 17, idpel: "512010234577", nama: "G. Kuliah Bersama OR dan Kes", gol: "S1", lwbp: 14634, wbp: 0, denda: 0 },
+        { id: 18, idpel: "512010234578", nama: "FIKK Gedung U1/U2", gol: "S1", lwbp: 49706, wbp: 0, denda: 0 },
+        { id: 19, idpel: "512010234579", nama: "Gedung Sawunggaling Unesa", gol: "S1", lwbp: 15304, wbp: 0, denda: 0 },
+        { id: 20, idpel: "512011234501", nama: "IKIP / Universitas Negeri Surabaya", gol: "S2", lwbp: 63252, wbp: 9274, denda: 0 },
+        { id: 21, idpel: "512011234502", nama: "UNIV P3B-UNESA / Laboratorium", gol: "S1", lwbp: 7413, wbp: 0, denda: 0 },
+        { id: 22, idpel: "512011234503", nama: "Kampus UNESA (Ketintang)", gol: "S1", lwbp: 2952, wbp: 0, denda: 0 },
+        { id: 23, idpel: "512011234504", nama: "BUSEM Unesa", gol: "S1", lwbp: 1827, wbp: 0, denda: 0 },
+        { id: 24, idpel: "512011234505", nama: "Gedung Pusat Nalar UNESA", gol: "B2", lwbp: 2391, wbp: 0, denda: 0 },
+        { id: 25, idpel: "512011234506", nama: "Gedung UNESA Science", gol: "S2", lwbp: 12546, wbp: 1148, denda: 0 },
+        { id: 26, idpel: "512011234507", nama: "Gedung UKM Center", gol: "S1", lwbp: 656, wbp: 0, denda: 0 }
     ];
 
     // Menyimpan state pergeseran slider (%) dan status keaktifan denda per gedung
