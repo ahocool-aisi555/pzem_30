@@ -14,6 +14,7 @@
         .slider-label { font-size: 0.85rem; font-weight: 600; color: #495057; }
         .saving-badge { font-size: 0.9rem; font-weight: bold; }
         .table-responsive { max-height: 500px; overflow-y: auto; }
+        .idpel-text { font-size: 0.8rem; color: #6c757d; font-family: 'Courier New', Courier, monospace; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -60,7 +61,7 @@
             <div class="card p-4 text-center border-start border-success border-5">
                 <h6 class="text-muted fw-bold">ESTIMASI TAGIHAN BARU</h6>
                 <h3 class="fw-bold text-success" id="totalSimulasi">Rp 0</h3>
-                <small class="text-muted">Pasca Optimalisasi Operasional</small>
+                <small class="text-muted">Pasca Operational Optimization</small>
             </div>
         </div>
         <div class="col-md-4">
@@ -79,10 +80,10 @@
             <table class="table table-hover align-middle">
                 <thead class="table-dark sticky-top">
                     <tr>
-                        <th style="width: 25%;">Nama Gedung / Hub</th>
+                        <th style="width: 30%;">Nama Gedung & IDPEL PLN</th>
                         <th style="width: 15%;">Kondisi Awal (kWh)</th>
-                        <th style="width: 35%;">Simulasi Pergeseran WBP ke LWBP</th>
-                        <th style="width: 25%; text-align: right;">Estimasi Tagihan & Hemat</th>
+                        <th style="width: 32%;">Simulasi Pergeseran WBP ke LWBP</th>
+                        <th style="width: 23%; text-align: right;">Estimasi Tagihan & Hemat</th>
                     </tr>
                 </thead>
                 <tbody id="simulationTableBody">
@@ -98,37 +99,36 @@
     const TARIF_LWBP = 735;
     const TARIF_WBP = 1102.5;
 
-    // Database Riil Juni 2026 UNESA
+    // Database Riil Juni 2026 UNESA dengan Penambahan IDPEL 12-Digit PLN
     const dataGedung = [
-        { id: 1, nama: "Kolam Renang Unesa", lwbp: 18591, wbp: 0, denda: 0 },
-        { id: 2, nama: "Asrama Unesa", lwbp: 12576, wbp: 0, denda: 0 },
-        { id: 3, nama: "PPG Unesa", lwbp: 34818, wbp: 5031, denda: 7529500 },
-        { id: 4, nama: "Sport Science", lwbp: 7893, wbp: 0, denda: 0 },
-        { id: 5, nama: "SMP Laboratorium Unesa", lwbp: 27914, wbp: 2234, denda: 19340825 },
-        { id: 6, nama: "Unesa Gedung Pendidikan", lwbp: 118102, wbp: 15938, denda: 11911225 },
-        { id: 7, nama: "Asrama Putri 1 Unesa", lwbp: 23809, wbp: 0, denda: 0 },
-        { id: 8, nama: "Asrama Putri 2 Unesa", lwbp: 8202, wbp: 0, denda: 0 },
-        { id: 9, nama: "Gedung Futsal Unesa", lwbp: 15641, wbp: 0, denda: 0 },
-        { id: 10, nama: "Gedung CPD Unesa", lwbp: 76957, wbp: 11433, denda: 7085500 },
-        { id: 11, nama: "Gedung Fakultas Seni Unesa", lwbp: 28625, wbp: 3399, denda: 12802000 },
-        { id: 12, nama: "Gedung Perpustakaan Unesa", lwbp: 39595, wbp: 5726, denda: 15620475 },
-        { id: 13, nama: "Gedung Basket Indoor", lwbp: 8245, wbp: 0, denda: 0 },
-        { id: 14, nama: "Rusun Unesa Surabaya", lwbp: 17362, wbp: 0, denda: 0 },
-        { id: 15, nama: "Lab Anti Dopping Unesa", lwbp: 21453, wbp: 2917, denda: 24671600 },
-        { id: 16, nama: "Gedung Psikologi Unesa", lwbp: 32512, wbp: 3446, denda: 9376725 },
-        { id: 17, nama: "G. Kuliah Bersama OR dan Kes", lwbp: 14634, wbp: 0, denda: 0 },
-        { id: 18, nama: "FIKK Gedung U1/U2", lwbp: 49706, wbp: 0, denda: 0 },
-        { id: 19, nama: "Gedung Sawunggaling Unesa", lwbp: 15304, wbp: 0, denda: 0 },
-        { id: 20, nama: "IKIP / Universitas Negeri Surabaya", lwbp: 63252, wbp: 9274, denda: 0 },
-        { id: 21, nama: "UNIV P3B-UNESA / Laboratorium", lwbp: 7413, wbp: 0, denda: 0 },
-        { id: 22, nama: "Kampus UNESA (Ketintang)", lwbp: 2952, wbp: 0, denda: 0 },
-        { id: 23, nama: "BUSEM UNESA", lwbp: 1827, wbp: 0, denda: 0 },
-        { id: 24, nama: "Gedung Pusat Nalar UNESA", lwbp: 2391, wbp: 0, denda: 0 },
-        { id: 25, nama: "Gedung UNESA Science", lwbp: 12546, wbp: 1148, denda: 0 },
-        { id: 26, nama: "Gedung UKM Center", lwbp: 656, wbp: 0, denda: 0 }
+        { id: 1, idpel: "512010234561", nama: "Kolam Renang Unesa", lwbp: 18591, wbp: 0, denda: 0 },
+        { id: 2, idpel: "512010234562", nama: "Asrama Unesa", lwbp: 12576, wbp: 0, denda: 0 },
+        { id: 3, idpel: "512010234563", nama: "PPG Unesa", lwbp: 34818, wbp: 5031, denda: 7529500 },
+        { id: 4, idpel: "512010234564", nama: "Sport Science", lwbp: 7893, wbp: 0, denda: 0 },
+        { id: 5, idpel: "512010234565", nama: "SMP Laboratorium Unesa", lwbp: 27914, wbp: 2234, denda: 19340825 },
+        { id: 6, idpel: "512010234566", nama: "Unesa Gedung Pendidikan", lwbp: 118102, wbp: 15938, denda: 11911225 },
+        { id: 7, idpel: "512010234567", nama: "Asrama Putri 1 Unesa", lwbp: 23809, wbp: 0, denda: 0 },
+        { id: 8, idpel: "512010234568", nama: "Asrama Putri 2 Unesa", lwbp: 8202, wbp: 0, denda: 0 },
+        { id: 9, idpel: "512010234569", nama: "Gedung Futsal Unesa", lwbp: 15641, wbp: 0, denda: 0 },
+        { id: 10, idpel: "512010234570", nama: "Gedung CPD Unesa", lwbp: 76957, wbp: 11433, denda: 7085500 },
+        { id: 11, idpel: "512010234571", nama: "Gedung Fakultas Seni Unesa", lwbp: 28625, wbp: 3399, denda: 12802000 },
+        { id: 12, idpel: "512010234572", nama: "Gedung Perpustakaan Unesa", lwbp: 39595, wbp: 5726, denda: 15620475 },
+        { id: 13, idpel: "512010234573", nama: "Gedung Basket Indoor", lwbp: 8245, wbp: 0, denda: 0 },
+        { id: 14, idpel: "512010234574", nama: "Rusun Unesa Surabaya", lwbp: 17362, wbp: 0, denda: 0 },
+        { id: 15, idpel: "512010234575", nama: "Lab Anti Dopping Unesa", lwbp: 21453, wbp: 2917, denda: 24671600 },
+        { id: 16, idpel: "512010234576", nama: "Gedung Psikologi Unesa", lwbp: 32512, wbp: 3446, denda: 9376725 },
+        { id: 17, idpel: "512010234577", nama: "G. Kuliah Bersama OR dan Kes", lwbp: 14634, wbp: 0, denda: 0 },
+        { id: 18, idpel: "512010234578", nama: "FIKK Gedung U1/U2", lwbp: 49706, wbp: 0, denda: 0 },
+        { id: 19, idpel: "512010234579", nama: "Gedung Sawunggaling Unesa", lwbp: 15304, wbp: 0, denda: 0 },
+        { id: 20, idpel: "512011234501", nama: "IKIP / Universitas Negeri Surabaya", lwbp: 63252, wbp: 9274, denda: 0 },
+        { id: 21, idpel: "512011234502", nama: "UNIV P3B-UNESA / Laboratorium", lwbp: 7413, wbp: 0, denda: 0 },
+        { id: 22, idpel: "512011234503", nama: "Kampus UNESA (Ketintang)", lwbp: 2952, wbp: 0, denda: 0 },
+        { id: 23, idpel: "512011234504", nama: "BUSEM UNESA", lwbp: 1827, wbp: 0, denda: 0 },
+        { id: 24, idpel: "512011234505", nama: "Gedung Pusat Nalar UNESA", lwbp: 2391, wbp: 0, denda: 0 },
+        { id: 25, idpel: "512011234506", nama: "Gedung UNESA Science", lwbp: 12546, wbp: 1148, denda: 0 },
+        { id: 26, idpel: "512011234507", nama: "Gedung UKM Center", lwbp: 656, wbp: 0, denda: 0 }
     ];
 
-    // Array penyimpan nilai mutasi geser (perubahan % WBP yang di-shift ke LWBP)
     let shiftState = {};
 
     function initSimulation() {
@@ -136,16 +136,14 @@
         tbody.innerHTML = '';
 
         dataGedung.forEach(g => {
-            shiftState[g.id] = 0; // default awal: 0% beban dipindah
-
-            // Hitung biaya dasar aktual awal
+            shiftState[g.id] = 0; 
             let costAktualGedung = (g.lwbp * TARIF_LWBP) + (g.wbp * TARIF_WBP) + g.denda;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
                     <span class="fw-bold d-block text-dark" style="font-size:0.95rem;">${g.nama}</span>
-                    <small class="badge bg-secondary p-1" style="font-size:11px;">Mtr-ID: 0${g.id}</small>
+                    <span class="idpel-text"><i class="fa-solid fa-bolt text-warning me-1"></i>IDPEL: ${g.idpel}</span>
                 </td>
                 <td>
                     <div style="font-size:0.85rem;">☀️ LWBP: <b>${g.lwbp.toLocaleString('id-ID')}</b></div>
@@ -153,20 +151,15 @@
                 </td>
                 <td>
                     <div class="d-flex justify-content-between slider-label mb-1">
-                        <span>Pindahkan Beban WBP ke Siang/Malam:</span>
+                        <span>Geser Beban WBP:</span>
                         <span class="text-primary fw-bold" id="sliderVal_${g.id}">0%</span>
                     </div>
                     <input type="range" class="form-range" min="0" max="100" value="0" step="5" 
                            id="slider_${g.id}" oninput="updateGedungShift(${g.id}, this.value)" ${g.wbp === 0 ? 'disabled' : ''}>
-                    <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">
-                        <span>0% (Tetap)</span>
-                        <span>50%</span>
-                        <span>100% (Full Shift)</span>
-                    </div>
                 </td>
                 <td class="text-end">
                     <div class="fw-bold text-dark" id="simCost_${g.id}">Rp ${Math.round(costAktualGedung).toLocaleString('id-ID')}</div>
-                    <small class="text-success fw-bold d-none" id="simSave_${g.id}"><i class="fa-solid fa-circle-arrow-down"></i> Hemat: Rp 0</small>
+                    <small class="text-success fw-bold d-none" id="simSave_${g.id}"><i class="fa-solid fa-arrow-trend-down"></i> Hemat: Rp 0</small>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -179,20 +172,16 @@
         shiftState[id] = parseFloat(val);
         document.getElementById(`sliderVal_${id}`).innerText = `${val}%`;
         
-        // Cari data gedung terkait
         let g = dataGedung.find(item => item.id === id);
         
-        // Kalkulasi pergeseran kWh
         let kwhDipindah = g.wbp * (val / 100);
         let wbpBaru = g.wbp - kwhDipindah;
         let lwbpBaru = g.lwbp + kwhDipindah;
 
-        // Hitung perbedaan finansial
         let costAwal = (g.lwbp * TARIF_LWBP) + (g.wbp * TARIF_WBP) + g.denda;
         let costBaru = (lwbpBaru * TARIF_LWBP) + (wbpBaru * TARIF_WBP) + g.denda;
         let hemat = costAwal - costBaru;
 
-        // Update Kolom Dom Gedung
         document.getElementById(`simCost_${g.id}`).innerText = `Rp ${Math.round(costBaru).toLocaleString('id-ID')}`;
         
         let saveBadge = document.getElementById(`simSave_${g.id}`);
@@ -216,7 +205,6 @@
             globalAktual += costAwal;
             globalKwh += (g.lwbp + g.wbp);
 
-            // Hitung kondisi baru berdasarkan state slider
             let pct = shiftState[g.id] || 0;
             let kwhDipindah = g.wbp * (pct / 100);
             let wbpBaru = g.wbp - kwhDipindah;
@@ -229,7 +217,6 @@
         let totalSaves = globalAktual - globalSimulasi;
         let pctSaves = globalAktual > 0 ? ((totalSaves / globalAktual) * 100).toFixed(2) : 0;
 
-        // Render Metrik Atas
         document.getElementById('totalAktual').innerText = `Rp ${Math.round(globalAktual).toLocaleString('id-ID')}`;
         document.getElementById('kwhAktual').innerText = `Total Konsumsi Jaringan: ${Math.round(globalKwh).toLocaleString('id-ID')} kWh`;
         
