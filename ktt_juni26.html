@@ -185,7 +185,7 @@
             type: 'bar',
             data: {
                 // Kombinasi Array Nama dan IDPEL (Otomatis baris baru di Chart.js)
-                labels: topGedung.map(d => [d.nama, `IDPEL: ${d.idpel}`]),
+                labels: topGedung.map(d => [d.nama, `${d.idpel}`]),
                 datasets: [
                     {
                         label: 'Emisi dari LWBP (kg CO₂)',
@@ -214,11 +214,18 @@
                                 let val = context.parsed.x || 0;
                                 let chart = context.chart;
                                 let idx = context.dataIndex;
+                                
+                                // Ambil nilai dari dataset 0 (LWBP) dan dataset 1 (WBP)
                                 let lwbpEmisi = chart.datasets[0].data[idx] || 0;
                                 let wbpEmisi = chart.datasets[1].data[idx] || 0;
                                 let totalEmisi = lwbpEmisi + wbpEmisi;
+                                
+                                // Hitung persentase kontribusi komponen yang di-hover
                                 let pct = totalEmisi > 0 ? ((val / totalEmisi) * 100).toFixed(1) : 0;
-                                return `${context.dataset.label.split(' ')[2]}: ${val.toLocaleString('id-ID')} kg (${pct}%)`;
+                                
+                                // Ambil nama dataset asli (Emisi dari LWBP / WBP)
+                                let datasetLabel = context.dataset.label || '';
+                                return `${datasetLabel}: ${val.toLocaleString('id-ID')} kg (${pct}%)`;
                             }
                         }
                     }
@@ -232,7 +239,7 @@
         currentCharts.breakdown = new Chart(ctx2, {
             type: 'bar',
             data: {
-                labels: dataProses.map(d => [d.nama, `IDPEL: ${d.idpel}`]),
+                labels: dataProses.map(d => [d.nama, ` ${d.idpel}`]),
                 datasets: [
                     {
                         label: 'Konsumsi LWBP (kWh)',
