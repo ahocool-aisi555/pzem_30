@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Analisis Power & Emisi Gedung (Versi Github)</title>
+    <title>Laporan Analisis Power & Emisi Gedung</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
         body { background-color: #f8f9fa; }
         .card { box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: none; margin-bottom: 25px; }
         .header-title { color: #2c3e50; font-weight: 700; }
-        .chart-container { position: relative; height: 260px; width: 100%; }
+        .chart-container { position: relative; height: 240px; width: 100%; }
         .metric-card { border-left: 5px solid #2ecc71; }
         .hidden-section { display: none; }
     </style>
@@ -19,44 +19,57 @@
 <div class="container py-4">
     <div class="text-center mb-4">
         <h1 class="header-title">🏢 Laporan Analisis Power & Emisi Gedung</h1>
-        <p class="text-muted">By Unesa Smart Energy | Versi GitHub Data</p>
+        <p class="text-muted">By Unesa Smart Energy | Dynamic Date & File Mapping</p>
     </div>
 
     <div class="card p-4">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label fw-bold text-primary">📄 Nama File Log di Folder</label>
-                <input type="text" id="fileNameInput" class="form-control fw-bold text-secondary shadow-sm" value="log_20260618_11.txt">
-            </div>
+        <form id="filterForm" class="row g-3 align-items-end" onsubmit="event.preventDefault(); loadLogData();">
             <div class="col-md-2">
                 <label class="form-label fw-bold">Rentang Analisis</label>
-                <select id="selectedMode" class="form-select bg-light fw-bold text-primary">
-                    <option value="harian" selected>📅 Harian (Jam)</option>
+                <select name="mode" id="selectedMode" class="form-select bg-light fw-bold text-primary">
+                    <option value="harian" selected>📅 Harian (Menit)</option>
                     <option value="mingguan">📊 Mingguan (7 Hari)</option>
                     <option value="bulanan">📈 Bulanan (30 Hari)</option>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label class="form-label fw-bold">Pilihan Menu Laporan</label>
-                <select id="selectedId" class="form-select fw-bold text-dark">
-                    <option value="TOTAL" selected>🏢 TOTAL (Akumulasi & Carbon Print)</option>
-                    <option value="Semua_Watt">⚡ Semua ID (Grafik Daya - Watt)</option>
+                <select name="slave_id" id="selectedId" class="form-select fw-bold text-dark">
+                    <option value="Semua_Watt" selected>⚡ Semua ID (Grafik Daya - Watt)</option>
                     <option value="Semua_Carbon">🍃 Semua ID (Grafik Emisi Carbon)</option>
+                    <option value="TOTAL">🏢 TOTAL (Akumulasi & Carbon Print)</option>
                     <option disabled>──────────────────────────────</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label fw-bold">Luas Lantai (m²)</label>
-                <input type="number" id="luasLantai" class="form-control fw-bold text-danger" value="150" min="1">
+                <label class="form-label fw-bold">Pilih Tanggal</label>
+                <input type="date" id="filterTanggal" name="tanggal" class="form-control fw-bold text-primary" value="2026-06-18">
             </div>
             <div class="col-md-2">
-                <button id="btnProses" class="btn btn-success w-100 fw-bold shadow-sm">🔄 Refresh Data</button>
+                <label class="form-label fw-bold">Luas Lantai (m²)</label>
+                <input type="number" id="luasLantai" class="form-control fw-bold text-danger" value="150" min="1" oninput="recalculateTotalIntensity()">
             </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm">🚀 Tarik Data</button>
+            </div>
+        </form>
+        <div class="mt-2 text-end">
+            <small class="text-muted">Target berkas terdeteksi: <code id="lblTargetFile" class="fw-bold text-dark">Mengecek tanggal...</code></small>
         </div>
     </div>
 
     <div id="statusAlert" class="alert alert-info text-center fw-bold shadow-sm">
-        ⏳ Sedang mengambil data dari file log di server GitHub...
+        ⏳ Menunggu penarikan data dari server repositori...
+    </div>
+
+    <div id="sectionSemuaWatt" class="hidden-section">
+        <h4 class="mb-3 text-primary fw-bold text-center">Analisis Beban Daya Listrik: 30 Jalur MCB (Watt)</h4>
+        <div class="row" id="containerSemuaWatt"></div>
+    </div>
+
+    <div id="sectionSemuaCarbon" class="hidden-section">
+        <h4 class="mb-3 text-success fw-bold text-center">Analisis Jejak Emisi Karbon Aktual: 30 Jalur MCB (gram CO₂)</h4>
+        <div class="row" id="containerSemuaCarbon"></div>
     </div>
 
     <div id="sectionTotal" class="hidden-section">
@@ -87,8 +100,10 @@
         <div class="row mb-3">
             <div class="col-12 text-center">
                 <div class="btn-group shadow-sm">
-                    <button class="btn btn-outline-dark fw-bold px-4 active" id="btnSwitchWatt">⚡ Lihat Grafik Watt Total</button>
-                    <button class="btn btn-outline-success fw-bold px-4" id="btnSwitchCarbon">🍃 Lihat Grafik Carbon Total</button>
+                    <input type="radio" class="btn-check" name="totalViewParam" id="totalWattRadio" checked onclick="switchTotalChart('watt')">
+                    <label class="btn btn-outline-dark fw-bold px-4" for="totalWattRadio">⚡ Lihat Grafik Watt Total</label>
+                    <input type="radio" class="btn-check" name="totalViewParam" id="totalCarbonRadio" onclick="switchTotalChart('carbon')">
+                    <label class="btn btn-outline-success fw-bold px-4" for="totalCarbonRadio">🍃 Lihat Grafik Carbon Total</label>
                 </div>
             </div>
         </div>
@@ -103,25 +118,15 @@
         </div>
     </div>
 
-    <div id="sectionSemuaWatt" class="hidden-section">
-        <h4 class="mb-3 text-primary fw-bold text-center">Analisis Beban Daya Listrik: 30 Jalur MCB (Watt)</h4>
-        <div class="row" id="containerSemuaWatt"></div>
-    </div>
-
-    <div id="sectionSemuaCarbon" class="hidden-section">
-        <h4 class="mb-3 text-success fw-bold text-center">Analisis Jejak Emisi Karbon Aktual: 30 Jalur MCB (gram CO₂)</h4>
-        <div class="row" id="containerSemuaCarbon"></div>
-    </div>
-
     <div id="sectionIndividual" class="hidden-section">
-        <h4 class="mb-3 text-secondary fw-bold text-center" id="txtTitleIndividual">Analisis Parameter Lengkap: ID 1</h4>
-        <div class="row g-4">
-            <div class="col-md-6"><div class="card p-3"><h6 class="fw-bold text-danger text-center">Tegangan (Volt)</h6><canvas id="chartVolt"></canvas></div></div>
-            <div class="col-md-6"><div class="card p-3"><h6 class="fw-bold text-warning text-center">Arus (Ampere)</h6><canvas id="chartAmpere"></canvas></div></div>
-            <div class="col-md-6"><div class="card p-3"><h6 class="fw-bold text-success text-center">Daya (Watt)</h6><canvas id="chartWatt"></canvas></div></div>
-            <div class="col-md-6"><div class="card p-3"><h6 class="fw-bold text-info text-center">Energi (Wh)</h6><canvas id="chartEnergy"></canvas></div></div>
-            <div class="col-md-6"><div class="card p-3"><h6 class="fw-bold text-primary text-center">Frekuensi (Hz)</h6><canvas id="chartHz"></canvas></div></div>
-            <div class="col-md-6"><div class="card p-3"><h6 class="fw-bold text-secondary text-center">Power Factor (PF)</h6><canvas id="chartPF"></canvas></div></div>
+        <h4 class="mb-3 text-secondary fw-bold" id="txtTitleIndividual">Analisis Parameter Lengkap: ID 1</h4>
+        <div class="row">
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartVolt"></canvas></div></div>
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartAmpere"></canvas></div></div>
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartWatt"></canvas></div></div>
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartEnergy"></canvas></div></div>
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartHz"></canvas></div></div>
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartPF"></canvas></div></div>
         </div>
     </div>
 </div>
@@ -133,8 +138,11 @@
     let rawData = [];
     let activeCharts = [];
     let mainTotalChart = null;
+    let totalAccumulatedCarbonKg = 0;
+    let timelineWattTotal = [];
+    let timelineCarbonTotal = [];
 
-    // Build Dropdown
+    // 1. Generate Dropdown Opsi ID Meter 1-30
     const selectId = document.getElementById('selectedId');
     for (let i = 1; i <= 30; i++) {
         let opt = document.createElement('option');
@@ -143,15 +151,39 @@
         selectId.appendChild(opt);
     }
 
-    // Build Containers
+    // 2. Build DOM Container Grid Loop untuk Semua ID
     const containerWatt = document.getElementById('containerSemuaWatt');
     const containerCarbon = document.getElementById('containerSemuaCarbon');
     for (let i = 1; i <= 30; i++) {
-        containerWatt.innerHTML += `<div class="col-12 col-md-6"><div class="card p-3"><div class="d-flex justify-content-between align-items-center mb-1"><h6 class="fw-bold m-0 text-dark">⚡ POWER METER ID ${i}</h6><span class="badge bg-primary">Watt</span></div><div class="chart-container"><canvas id="chartWatt_${i}"></canvas></div></div></div>`;
-        containerCarbon.innerHTML += `<div class="col-12 col-md-6"><div class="card p-3"><div class="d-flex justify-content-between align-items-center mb-1"><h6 class="fw-bold m-0 text-dark">🍃 CARBON FOOTPRINT ID ${i}</h6><span class="badge bg-success">gram CO₂</span></div><div class="chart-container"><canvas id="chartCarbon_${i}"></canvas></div></div></div>`;
+        containerWatt.innerHTML += `<div class="col-12"><div class="card p-3"><div class="d-flex justify-content-between align-items-center mb-1"><h6 class="fw-bold m-0 text-dark">⚡ POWER METER ID ${i}</h6><span class="badge bg-primary">Daya Aktif (Watt)</span></div><div class="chart-container"><canvas id="chartWatt_${i}"></canvas></div></div></div>`;
+        containerCarbon.innerHTML += `<div class="col-12"><div class="card p-3"><div class="d-flex justify-content-between align-items-center mb-1"><h6 class="fw-bold m-0 text-dark">🍃 CARBON FOOTPRINT ID ${i}</h6><span class="badge bg-success">Emisi (gram CO₂)</span></div><div class="chart-container"><canvas id="chartCarbon_${i}"></canvas></div></div></div>`;
     }
 
-    // CSV Parser
+    // 3. Helper Pengonversi Format Tanggal (Input HTML -> String Nama File Server)
+    function getFormattedDate(dateString) {
+        if (!dateString) return "";
+        return dateString.replace(/-/g, ""); // "2026-06-18" menjadi "20260618"
+    }
+
+    // Live Update Teks Label Target Berkas saat tanggal diubah
+    function updateFileLabel() {
+        const tglInput = document.getElementById('filterTanggal').value;
+        const mode = document.getElementById('selectedMode').value;
+        const formattedDate = getFormattedDate(tglInput);
+
+        if (mode === "harian") {
+            document.getElementById('lblTargetFile').innerText = `log_${formattedDate}_10.txt (Jam Berjalan)`;
+        } else if (mode === "mingguan") {
+            document.getElementById('lblTargetFile').innerText = `Rentang 7 hari sebelum ${tglInput}`;
+        } else {
+            document.getElementById('lblTargetFile').innerText = `Rentang 30 hari sebelum ${tglInput}`;
+        }
+    }
+
+    document.getElementById('filterTanggal').addEventListener('change', updateFileLabel);
+    document.getElementById('selectedMode').addEventListener('change', updateFileLabel);
+
+    // 4. CSV Text Parser
     function parsePzemCsv(text) {
         const lines = text.split('\n');
         const result = [];
@@ -179,49 +211,68 @@
         return result;
     }
 
-    // Fungsi Fetch Otomatis dari file se-folder
-    function loadLogFileFromServer() {
-        const fileName = document.getElementById('fileNameInput').value.trim();
+    // 5. Core Engine Penarik Data Multi-file Berdasarkan Pilihan Tanggal & Rentang
+    function loadLogData() {
+        const tglInput = document.getElementById('filterTanggal').value;
+        const mode = document.getElementById('selectedMode').value;
         const alertBox = document.getElementById('statusAlert');
-        
+
+        if (!tglInput) {
+            alert("Silakan tentukan tanggal analisis terlebih dahulu!");
+            return;
+        }
+
         alertBox.style.display = 'block';
         alertBox.className = "alert alert-info text-center fw-bold shadow-sm";
-        alertBox.innerText = `⏳ Sedang mengunduh file: ${fileName}...`;
+        alertBox.innerText = `⏳ Sedang menyelaraskan & memuat berkas data untuk rentang ${mode}...`;
 
-        // Ambil data file dengan relative path (karena satu folder)
-        fetch(fileName)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`File "${fileName}" tidak ditemukan di server/folder GitHub.`);
-                }
-                return response.text();
-            })
-            .then(text => {
-                rawData = parsePzemCsv(text);
-                if (rawData.length > 0) {
-                    alertBox.className = "alert alert-success text-center fw-bold shadow-sm";
-                    alertBox.innerText = `✅ Berhasil meload ${rawData.length} baris data dari file "${fileName}"!`;
-                    
-                    // Otomatis langsung render tampilan default (TOTAL) setelah load berhasil
-                    destroyExistingCharts();
-                    renderDashboard();
-                } else {
-                    alertBox.className = "alert alert-warning text-center fw-bold shadow-sm";
-                    alertBox.innerText = "⚠️ File terbaca, tapi struktur datanya kosong atau salah.";
-                }
-            })
-            .catch(error => {
+        let filesToFetch = [];
+        const baseDate = new Date(tglInput);
+
+        // Menentukan daftar file log yang harus ditarik berdasarkan mode rentang analisis
+        if (mode === "harian") {
+            filesToFetch.push(`log_${getFormattedDate(tglInput)}_10.txt`);
+        } else {
+            let daysCount = mode === "mingguan" ? 7 : 30;
+            for (let i = 0; i < daysCount; i++) {
+                let tempDate = new Date(baseDate);
+                tempDate.setDate(baseDate.getDate() - i);
+                let yyyy = tempDate.getFullYear();
+                let mm = String(tempDate.getMonth() + 1).padStart(2, '0');
+                let dd = String(tempDate.getDate()).padStart(2, '0');
+                filesToFetch.push(`log_${yyyy}${mm}${dd}_10.txt`);
+            }
+        }
+
+        // Eksekusi penarikan data paralel (Promise.all)
+        rawData = [];
+        let fetchPromises = filesToFetch.map(fileName => 
+            fetch(fileName)
+                .then(res => res.ok ? res.text() : "")
+                .then(text => {
+                    if (text) {
+                        let parsed = parsePzemCsv(text);
+                        rawData = rawData.concat(parsed);
+                    }
+                })
+                .catch(() => {}) // Lewati jika ada file tanggal tertentu yang belum di-upload/kosong
+        );
+
+        Promise.all(fetchPromises).then(() => {
+            if (rawData.length > 0) {
+                alertBox.className = "alert alert-success text-center fw-bold shadow-sm";
+                alertBox.innerText = `✅ Sukses mengonsolidasi ${rawData.length} data baris berdasarkan filter Anda.`;
+                destroyExistingCharts();
+                renderDashboard();
+            } else {
                 alertBox.className = "alert alert-danger text-center fw-bold shadow-sm";
-                alertBox.innerText = `❌ Gagal mengambil data: ${error.message}`;
-            });
+                alertBox.innerText = `❌ Gagal: Tidak ada data berkas log yang ditemukan untuk parameter tanggal tersebut.`;
+            }
+        });
     }
 
-    // Event Triggers
-    document.getElementById('btnProses').addEventListener('click', loadLogFileFromServer);
+    // Memicu render ulang visual jika menu dropdown diganti tanpa perlu re-fetch file kembali
     document.getElementById('selectedId').addEventListener('change', () => {
-        if(rawData.length > 0) { destroyExistingCharts(); renderDashboard(); }
-    });
-    document.getElementById('selectedMode').addEventListener('change', () => {
         if(rawData.length > 0) { destroyExistingCharts(); renderDashboard(); }
     });
 
@@ -231,7 +282,7 @@
         if (mainTotalChart) { mainTotalChart.destroy(); mainTotalChart = null; }
     }
 
-    // Dashboard Engine Render
+    // 6. Router Visualisasi Grafik Dashboard
     function renderDashboard() {
         const currentMenu = document.getElementById('selectedId').value;
         const mode = document.getElementById('selectedMode').value;
@@ -244,66 +295,12 @@
         const labelsX = [...new Set(rawData.map(item => item.time))].sort();
         let carbonMultiplier = mode === "harian" ? (0.85 / 60) : (mode === "bulanan" ? (0.85 * 24) : 0.85);
 
-        if (currentMenu === "TOTAL") {
-            document.getElementById('sectionTotal').className = "display-block";
-            let totalAccumulatedCarbonKg = 0; let totalAccumulatedKwh = 0;
-
-            const timelineWattTotal = labelsX.map(x => {
-                let sumWatt = 0;
-                rawData.filter(item => item.time === x).forEach(item => { sumWatt += (parseFloat(item.power) || 0); });
-                return sumWatt;
-            });
-
-            const timelineCarbonTotal = timelineWattTotal.map(w => {
-                let cGram = w * carbonMultiplier;
-                totalAccumulatedCarbonKg += (cGram / 1000); totalAccumulatedKwh += (w / 1000); 
-                return parseFloat(cGram.toFixed(1));
-            });
-
-            document.getElementById("txtTotalKwh").innerText = Math.round(totalAccumulatedKwh).toLocaleString('id-ID');
-            document.getElementById("txtTotalCarbon").innerText = Math.round(totalAccumulatedCarbonKg).toLocaleString('id-ID');
-
-            const recalculateIntensity = () => {
-                const luas = parseFloat(document.getElementById("luasLantai").value) || 1;
-                const intensitas = (totalAccumulatedCarbonKg * 1000) / luas;
-                document.getElementById("txtIntensitas").innerText = Math.round(intensitas).toLocaleString('id-ID');
-            };
-            document.getElementById("luasLantai").oninput = recalculateIntensity;
-            recalculateIntensity();
-
-            const ctxTotal = document.getElementById('chartTotalAccumulated').getContext('2d');
-            mainTotalChart = new Chart(ctxTotal, {
-                type: 'line',
-                data: {
-                    labels: labelsX,
-                    datasets: [{ label: 'Total Daya (Watt)', data: timelineWattTotal, borderColor: '#34495e', borderWidth: 2, fill: true, backgroundColor: 'rgba(52, 73, 94, 0.05)', tension: 0.1, pointRadius: 1 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-
-            document.getElementById('btnSwitchWatt').onclick = function() {
-                this.classList.add('active'); document.getElementById('btnSwitchCarbon').classList.remove('active');
-                document.getElementById("totalChartTitle").innerText = "Grafik Akumulasi Daya Beban Total Lantai (Watt)";
-                mainTotalChart.data.datasets[0].label = "Total Daya (Watt)";
-                mainTotalChart.data.datasets[0].data = timelineWattTotal;
-                mainTotalChart.data.datasets[0].borderColor = '#34495e'; mainTotalChart.data.datasets[0].backgroundColor = 'rgba(52, 73, 94, 0.05)';
-                mainTotalChart.update();
-            };
-            document.getElementById('btnSwitchCarbon').onclick = function() {
-                this.classList.add('active'); document.getElementById('btnSwitchWatt').classList.remove('active');
-                document.getElementById("totalChartTitle").innerText = "Grafik Dampak Emisi Karbon Kumulatif Lantai (gram CO₂)";
-                mainTotalChart.data.datasets[0].label = "Total Emisi (g CO₂)";
-                mainTotalChart.data.datasets[0].data = timelineCarbonTotal;
-                mainTotalChart.data.datasets[0].borderColor = '#27ae60'; mainTotalChart.data.datasets[0].backgroundColor = 'rgba(39, 174, 96, 0.05)';
-                mainTotalChart.update();
-            };
-        }
-        else if (currentMenu === "Semua_Watt") {
+        if (currentMenu === "Semua_Watt") {
             document.getElementById('sectionSemuaWatt').className = "display-block";
             for (let id = 1; id <= 30; id++) {
                 const canvas = document.getElementById(`chartWatt_${id}`); if (!canvas) continue;
                 const dataDaya = labelsX.map(x => (rawData.find(item => item.time === x && parseInt(item.id) === id)?.power || 0));
-                let c = new Chart(canvas, { type: 'line', data: { labels: labelsX, datasets: [{ data: dataDaya, borderColor: '#3498db', pointRadius: 0, fill: true, backgroundColor: 'rgba(52, 152, 219, 0.05)', borderWidth: 1.5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+                let c = new Chart(canvas, { type: 'line', data: { labels: labelsX, datasets: [{ data: dataDaya, borderColor: '#3498db', pointRadius: 0, fill: true, backgroundColor: 'rgba(52, 152, 219, 0.05)', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
                 activeCharts.push(c);
             }
         }
@@ -312,9 +309,32 @@
             for (let id = 1; id <= 30; id++) {
                 const canvas = document.getElementById(`chartCarbon_${id}`); if (!canvas) continue;
                 const dataCarbon = labelsX.map(x => { const p = rawData.find(item => item.time === x && parseInt(item.id) === id)?.power || 0; return parseFloat((p * carbonMultiplier).toFixed(1)); });
-                let c = new Chart(canvas, { type: 'line', data: { labels: labelsX, datasets: [{ data: dataCarbon, borderColor: '#2ecc71', pointRadius: 0, fill: true, backgroundColor: 'rgba(46, 204, 113, 0.05)', borderWidth: 1.5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+                let c = new Chart(canvas, { type: 'line', data: { labels: labelsX, datasets: [{ data: dataCarbon, borderColor: '#2ecc71', pointRadius: 0, fill: true, backgroundColor: 'rgba(46, 204, 113, 0.05)', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
                 activeCharts.push(c);
             }
+        }
+        else if (currentMenu === "TOTAL") {
+            document.getElementById('sectionTotal').className = "display-block";
+            totalAccumulatedCarbonKg = 0; let totalAccumulatedKwh = 0;
+
+            timelineWattTotal = labelsX.map(x => {
+                let sumWatt = 0;
+                for (let id = 1; id <= 30; id++) { sumWatt += (rawData.find(item => item.time === x && parseInt(item.id) === id)?.power || 0); }
+                return sumWatt;
+            });
+
+            timelineCarbonTotal = timelineWattTotal.map(w => {
+                let cGram = w * carbonMultiplier;
+                totalAccumulatedCarbonKg += (cGram / 1000); totalAccumulatedKwh += (w / 1000); 
+                return parseFloat(cGram.toFixed(1));
+            });
+
+            document.getElementById("txtTotalKwh").innerText = Math.round(totalAccumulatedKwh).toLocaleString('id-ID');
+            document.getElementById("txtTotalCarbon").innerText = Math.round(totalAccumulatedCarbonKg).toLocaleString('id-ID');
+
+            const ctxTotal = document.getElementById('chartTotalAccumulated').getContext('2d');
+            mainTotalChart = new Chart(ctxTotal, { type: 'line', data: { labels: labelsX, datasets: [{ label: 'Total Daya (Watt)', data: timelineWattTotal, borderColor: '#34495e', borderWidth: 3, fill: true, backgroundColor: 'rgba(52, 73, 94, 0.05)' }] }, options: { responsive: true, maintainAspectRatio: false } });
+            recalculateTotalIntensity();
         }
         else {
             const targetId = parseInt(currentMenu);
@@ -322,28 +342,48 @@
             document.getElementById('txtTitleIndividual').innerText = `Analisis Parameter Lengkap: ID Meter ${targetId}`;
 
             const filteredData = rawData.filter(item => parseInt(item.id) === targetId);
-            const dataVolt = labelsX.map(x => (filteredData.find(i => i.time === x)?.voltage || 0));
-            const dataAmpere = labelsX.map(x => (filteredData.find(i => i.time === x)?.current || 0));
-            const dataWatt = labelsX.map(x => (filteredData.find(i => i.time === x)?.power || 0));
-            const dataEnergy = labelsX.map(x => (filteredData.find(i => i.time === x)?.energy || 0));
-            const dataHz = labelsX.map(x => (filteredData.find(i => i.time === x)?.frequency || 0));
-            const dataPF = labelsX.map(x => (filteredData.find(i => i.time === x)?.pf || 0));
-
-            const createIndividualChart = (canvasId, label, data, color) => {
-                let c = new Chart(document.getElementById(canvasId), { type: 'line', data: { labels: labelsX, datasets: [{ label: label, data: data, borderColor: color, fill: false, tension: 0.1, pointRadius: 2, borderWidth: 2 }] }, options: { responsive: true } });
+            const createChart = (canvasId, label, data, color) => {
+                let c = new Chart(document.getElementById(canvasId), { type: 'line', data: { labels: labelsX, datasets: [{ label: label, data: data, borderColor: color, tension: 0.1 }] }, options: { responsive: true } });
                 activeCharts.push(c);
             };
-            createIndividualChart('chartVolt', 'Volt', dataVolt, '#e74c3c');
-            createIndividualChart('chartAmpere', 'Ampere', dataAmpere, '#e67e22');
-            createIndividualChart('chartWatt', 'Watt', dataWatt, '#2ecc71');
-            createIndividualChart('chartEnergy', 'Wh', dataEnergy, '#9b59b6');
-            createIndividualChart('chartHz', 'Hz', dataHz, '#1abc9c');
-            createIndividualChart('chartPF', 'Power Factor', dataPF, '#34495e');
+            createChart('chartVolt', 'Tegangan (Volt)', labelsX.map(x => (filteredData.find(i => i.time === x)?.voltage || 0)), '#e74c3c');
+            createChart('chartAmpere', 'Arus (Ampere)', labelsX.map(x => (filteredData.find(i => i.time === x)?.current || 0)), '#e67e22');
+            createChart('chartWatt', 'Daya (Watt)', labelsX.map(x => (filteredData.find(i => i.time === x)?.power || 0)), '#2ecc71');
+            createChart('chartEnergy', 'Energi (Wh)', labelsX.map(x => (filteredData.find(i => i.time === x)?.energy || 0)), '#9b59b6');
+            createChart('chartHz', 'Frekuensi (Hz)', labelsX.map(x => (filteredData.find(i => i.time === x)?.frequency || 0)), '#1abc9c');
+            createChart('chartPF', 'Power Factor (PF)', labelsX.map(x => (filteredData.find(i => i.time === x)?.pf || 0)), '#34495e');
         }
     }
 
-    // Jalankan fetch otomatis saat halaman pertama kali diakses
-    window.onload = loadLogFileFromServer;
+    window.switchTotalChart = function(type) {
+        if(!mainTotalChart) return;
+        const title = document.getElementById("totalChartTitle");
+        if (type === 'carbon') {
+            title.innerText = "Grafik Dampak Emisi Karbon Kumulatif Lantai (gram CO₂)";
+            mainTotalChart.data.datasets[0].label = "Total Emisi (g CO₂)";
+            mainTotalChart.data.datasets[0].data = timelineCarbonTotal;
+            mainTotalChart.data.datasets[0].borderColor = '#27ae60'; mainTotalChart.data.datasets[0].backgroundColor = 'rgba(39, 174, 96, 0.05)';
+        } else {
+            title.innerText = "Grafik Akumulasi Daya Beban Total Lantai (Watt)";
+            mainTotalChart.data.datasets[0].label = "Total Daya (Watt)";
+            mainTotalChart.data.datasets[0].data = timelineWattTotal;
+            mainTotalChart.data.datasets[0].borderColor = '#34495e'; mainTotalChart.data.datasets[0].backgroundColor = 'rgba(52, 73, 94, 0.05)';
+        }
+        mainTotalChart.update();
+    }
+
+    window.recalculateTotalIntensity = function() {
+        const luas = parseFloat(document.getElementById("luasLantai").value) || 1;
+        const intensitas = (totalAccumulatedCarbonKg * 1000) / luas;
+        const target = document.getElementById("txtIntensitas");
+        if(target) target.innerText = Math.round(intensitas).toLocaleString('id-ID');
+    }
+
+    // Triger inisialisasi awal sistem saat pertama kali dimuat
+    window.onload = function() {
+        updateFileLabel();
+        loadLogData();
+    }
 </script>
 </body>
 </html>
