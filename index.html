@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Analisis Power & Emisi Gedung</title>
+    <title>Laporan Analisis Power & Emisi Gedung (Versi Github)</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
         body { background-color: #f8f9fa; }
@@ -19,30 +19,25 @@
 <div class="container py-4">
     <div class="text-center mb-4">
         <h1 class="header-title">🏢 Laporan Analisis Power & Emisi Gedung</h1>
-        <p class="text-muted">By Unesa Smart Energy | Auto-Mapping File Name</p>
+        <p class="text-muted">By Unesa Smart Energy | Versi GitHub Data</p>
     </div>
 
     <div class="card p-4">
         <div class="row g-3 align-items-end">
-            <div class="col-md-2">
-                <label class="form-label fw-bold">📅 Pilih Tanggal</label>
-                <input type="date" id="filterTanggal" class="form-control fw-bold text-primary shadow-sm" value="2026-06-19">
+            <div class="col-md-3">
+                <label class="form-label fw-bold text-primary">📄 Nama File Log di Folder</label>
+                <input type="text" id="fileNameInput" class="form-control fw-bold text-secondary shadow-sm" value="log_20260618_11.txt">
             </div>
             <div class="col-md-2">
-                <label class="form-label fw-bold">🕒 Pilih Jam (HH)</label>
-                <select id="filterJam" class="form-select fw-bold text-primary shadow-sm">
-                    <option value="00">00:00</option><option value="01">01:00</option><option value="02">02:00</option>
-                    <option value="03">03:00</option><option value="04">04:00</option><option value="05">05:00</option>
-                    <option value="06">06:00</option><option value="07">07:00</option><option value="08">08:00</option>
-                    <option value="09">09:00</option><option value="10">10:00</option><option value="11">11:00</option>
-                    <option value="12" selected>12:00</option><option value="13">13:00</option><option value="14">14:00</option>
-                    <option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option>
-                    <option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option>
-                    <option value="21">21:00</option><option value="22">22:00</option><option value="23">23:00</option>
+                <label class="form-label fw-bold">Rentang Analisis</label>
+                <select id="selectedMode" class="form-select bg-light fw-bold text-primary">
+                    <option value="harian" selected>📅 Harian (Jam)</option>
+                    <option value="mingguan">📊 Mingguan (7 Hari)</option>
+                    <option value="bulanan">📈 Bulanan (30 Hari)</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-bold">📋 Pilihan Menu Laporan</label>
+                <label class="form-label fw-bold">Pilihan Menu Laporan</label>
                 <select id="selectedId" class="form-select fw-bold text-dark">
                     <option value="TOTAL" selected>🏢 TOTAL (Akumulasi & Carbon Print)</option>
                     <option value="Semua_Watt">⚡ Semua ID (Grafik Daya - Watt)</option>
@@ -51,20 +46,17 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label fw-bold">📐 Luas Lantai (m²)</label>
+                <label class="form-label fw-bold">Luas Lantai (m²)</label>
                 <input type="number" id="luasLantai" class="form-control fw-bold text-danger" value="150" min="1">
             </div>
-            <div class="col-md-3">
-                <button id="btnProses" class="btn btn-success w-100 fw-bold shadow-sm">🚀 Tarik & Render Data</button>
+            <div class="col-md-2">
+                <button id="btnProses" class="btn btn-success w-100 fw-bold shadow-sm">🔄 Refresh Data</button>
             </div>
-        </div>
-        <div class="mt-2 text-end">
-            <small class="text-muted">Target file terdeteksi: <code id="lblTargetFile" class="fw-bold text-dark">log_20260619_12.txt</code></small>
         </div>
     </div>
 
     <div id="statusAlert" class="alert alert-info text-center fw-bold shadow-sm">
-        ⏳ Menunggu perintah sinkronisasi waktu...
+        ⏳ Sedang mengambil data dari file log di server GitHub...
     </div>
 
     <div id="sectionTotal" class="hidden-section">
@@ -142,7 +134,7 @@
     let activeCharts = [];
     let mainTotalChart = null;
 
-    // Build Dropdown Meter ID
+    // Build Dropdown
     const selectId = document.getElementById('selectedId');
     for (let i = 1; i <= 30; i++) {
         let opt = document.createElement('option');
@@ -151,7 +143,7 @@
         selectId.appendChild(opt);
     }
 
-    // Build Grid Containers
+    // Build Containers
     const containerWatt = document.getElementById('containerSemuaWatt');
     const containerCarbon = document.getElementById('containerSemuaCarbon');
     for (let i = 1; i <= 30; i++) {
@@ -159,27 +151,7 @@
         containerCarbon.innerHTML += `<div class="col-12 col-md-6"><div class="card p-3"><div class="d-flex justify-content-between align-items-center mb-1"><h6 class="fw-bold m-0 text-dark">🍃 CARBON FOOTPRINT ID ${i}</h6><span class="badge bg-success">gram CO₂</span></div><div class="chart-container"><canvas id="chartCarbon_${i}"></canvas></div></div></div>`;
     }
 
-    // Fungsi Pembentuk Nama File Log Berdasarkan Nilai Komponen Tanggal & Jam
-    function generateFileName() {
-        const tglValue = document.getElementById('filterTanggal').value; // Format: "YYYY-MM-DD"
-        const jamValue = document.getElementById('filterJam').value;     // Format: "HH"
-        
-        if (!tglValue) return "";
-        
-        // Bersihkan tanda strip '-' pada tanggal agar menjadi "YYYYMMDD"
-        const cleanDate = tglValue.replace(/-/g, ""); 
-        const generatedName = `log_${cleanDate}_${jamValue}.txt`;
-        
-        // Update label teks preview di layar bawah panel info
-        document.getElementById('lblTargetFile').innerText = generatedName;
-        return generatedName;
-    }
-
-    // Memantau perubahan input waktu untuk merubah teks preview file secara live
-    document.getElementById('filterTanggal').addEventListener('change', generateFileName);
-    document.getElementById('filterJam').addEventListener('change', generateFileName);
-
-    // CSV Parser Log PZEM
+    // CSV Parser
     function parsePzemCsv(text) {
         const lines = text.split('\n');
         const result = [];
@@ -207,24 +179,20 @@
         return result;
     }
 
-    // Engine Fetch Data Otomatis berdasarkan nama file bentukan filter waktu
-    function loadLogFileByTime() {
-        const fileName = generateFileName();
+    // Fungsi Fetch Otomatis dari file se-folder
+    function loadLogFileFromServer() {
+        const fileName = document.getElementById('fileNameInput').value.trim();
         const alertBox = document.getElementById('statusAlert');
         
-        if(!fileName) {
-            alert("Pilih tanggal terlebih dahulu!");
-            return;
-        }
-
         alertBox.style.display = 'block';
         alertBox.className = "alert alert-info text-center fw-bold shadow-sm";
-        alertBox.innerText = `⏳ Mengambil data berkas server: ${fileName}...`;
+        alertBox.innerText = `⏳ Sedang mengunduh file: ${fileName}...`;
 
+        // Ambil data file dengan relative path (karena satu folder)
         fetch(fileName)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`Berkas "${fileName}" tidak ditemukan di folder GitHub.`);
+                    throw new Error(`File "${fileName}" tidak ditemukan di server/folder GitHub.`);
                 }
                 return response.text();
             })
@@ -232,23 +200,28 @@
                 rawData = parsePzemCsv(text);
                 if (rawData.length > 0) {
                     alertBox.className = "alert alert-success text-center fw-bold shadow-sm";
-                    alertBox.innerText = `✅ Sukses! Memuat ${rawData.length} objek log data dari file "${fileName}".`;
+                    alertBox.innerText = `✅ Berhasil meload ${rawData.length} baris data dari file "${fileName}"!`;
+                    
+                    // Otomatis langsung render tampilan default (TOTAL) setelah load berhasil
                     destroyExistingCharts();
                     renderDashboard();
                 } else {
                     alertBox.className = "alert alert-warning text-center fw-bold shadow-sm";
-                    alertBox.innerText = "⚠️ File kosong atau format kolom rusak.";
+                    alertBox.innerText = "⚠️ File terbaca, tapi struktur datanya kosong atau salah.";
                 }
             })
             .catch(error => {
                 alertBox.className = "alert alert-danger text-center fw-bold shadow-sm";
-                alertBox.innerText = `❌ Eror: ${error.message}`;
+                alertBox.innerText = `❌ Gagal mengambil data: ${error.message}`;
             });
     }
 
-    // Event Binding
-    document.getElementById('btnProses').addEventListener('click', loadLogFileByTime);
+    // Event Triggers
+    document.getElementById('btnProses').addEventListener('click', loadLogFileFromServer);
     document.getElementById('selectedId').addEventListener('change', () => {
+        if(rawData.length > 0) { destroyExistingCharts(); renderDashboard(); }
+    });
+    document.getElementById('selectedMode').addEventListener('change', () => {
         if(rawData.length > 0) { destroyExistingCharts(); renderDashboard(); }
     });
 
@@ -261,6 +234,7 @@
     // Dashboard Engine Render
     function renderDashboard() {
         const currentMenu = document.getElementById('selectedId').value;
+        const mode = document.getElementById('selectedMode').value;
         
         document.getElementById('sectionTotal').className = "hidden-section";
         document.getElementById('sectionSemuaWatt').className = "hidden-section";
@@ -268,7 +242,7 @@
         document.getElementById('sectionIndividual').className = "hidden-section";
 
         const labelsX = [...new Set(rawData.map(item => item.time))].sort();
-        let carbonMultiplier = 0.85 / 60; // Default skala harian menit/detik
+        let carbonMultiplier = mode === "harian" ? (0.85 / 60) : (mode === "bulanan" ? (0.85 * 24) : 0.85);
 
         if (currentMenu === "TOTAL") {
             document.getElementById('sectionTotal').className = "display-block";
@@ -368,8 +342,8 @@
         }
     }
 
-    // Jalankan fetch awal otomatis saat web dibuka pertama kali
-    window.onload = loadLogFileByTime;
+    // Jalankan fetch otomatis saat halaman pertama kali diakses
+    window.onload = loadLogFileFromServer;
 </script>
 </body>
 </html>
