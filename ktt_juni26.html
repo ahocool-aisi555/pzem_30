@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Audit Energi & Karbon Unesa - Juni 2026</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: none; border-radius: 12px; margin-bottom: 25px; }
+        .metric-card { border-left: 6px solid; border-radius: 8px; transition: transform 0.2s; }
+        .metric-card:hover { transform: translateY(-3px); }
+        .bg-gradient-unesa { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; }
+        .badge-danger-custom { background-color: #e74c3c; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-4 py-4">
+    <div class="card bg-gradient-unesa p-4 text-center mb-4 shadow">
+        <h1 class="fw-bold"><i class="fa-solid fa-chart-line"></i> Dashboard Analisis Energi & Emisi Karbon</h1>
+        <p class="mb-0 opacity-75">Unesa Smart Energy | Audit Komprehensif Kampus Lidah Wetan & Ketintang - Juni 2026</p>
+    </div>
+
+    <div class="card p-3 mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-3">
+                <label class="form-label fw-bold"><i class="fa-solid fa-map-location-dot text-primary"></i> Filter Wilayah Kampus</label>
+                <select id="regionFilter" class="form-select fw-bold text-primary" onchange="renderDashboard()">
+                    <option value="SEMUA" selected>🌍 Semua Kampus (Gabungan)</option>
+                    <option value="LIDAH_WETAN">🏢 Kampus Lidah Wetan</option>
+                    <option value="KETINTANG">🏫 Kampus Ketintang</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold"><i class="fa-solid fa-chart-pie text-secondary"></i> Opsi Tampilan Grafik</label>
+                <select id="viewMode" class="form-select fw-bold" onchange="renderDashboard()">
+                    <option value="summary" selected>📊 Ringkasan Emisi & Peringatan</option>
+                    <option value="per_gedung">🔍 Matriks Komparatif Per Gedung</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold"><i class="fa-solid fa-ruler-combined text-success"></i> Input Luas Area Gedung (m²)</label>
+                <input type="number" id="totalArea" class="form-control fw-bold" value="65000" min="1" onchange="renderDashboard()">
+            </div>
+            <div class="col-md-3 text-end">
+                <span class="badge bg-success p-2 fs-6 mt-4"><i class="fa-solid fa-leaf"></i> Grid Faktor: 0.85 kg CO₂/kWh</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="summarySection">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card p-3 metric-card bg-white" style="border-left-color: #3498db;">
+                    <small class="text-muted fw-bold">TOTAL KONSUMSI ENERGI</small>
+                    <h3 class="fw-bold my-1 text-dark" id="mTotalKwh">0 <span class="fs-6 text-muted">kWh</span></h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 metric-card bg-white" style="border-left-color: #2ecc71;">
+                    <small class="text-muted fw-bold">TOTAL EMISI KARBON</small>
+                    <h3 class="fw-bold my-1 text-success" id="mTotalCarbon">0 <span class="fs-6 text-muted">kg CO₂</span></h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 metric-card bg-white" style="border-left-color: #9b59b6;">
+                    <small class="text-muted fw-bold">INTENSITAS EMISI (GECI)</small>
+                    <h3 class="fw-bold my-1 text-dark" id="mGeci">0 <span class="fs-6 text-muted">kg CO₂/m²</span></h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 metric-card bg-white" style="border-left-color: #e74c3c;">
+                    <small class="text-muted fw-bold">TOTAL BIAYA REKENING</small>
+                    <h3 class="fw-bold my-1 text-danger" id="mTotalCost">Rp 0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card p-4">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-cloud-meatball text-success"></i> Top Kontributor Emisi Karbon Utama (kg CO₂)</h5>
+                    <div style="position: relative; height: 420px;"><canvas id="chartTopCarbon"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Temuan Audit Energi & KVArh</h5>
+                    <div id="auditAlerts" class="overflow-auto" style="max-height: 420px;">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailSection" class="d-none">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-arrows-left-right-to-line text-primary"></i> Grafik Hubungan Konsumsi Listrik vs Dampak Karbon Per Gedung</h5>
+            <div style="position: relative; height: 500px;"><canvas id="chartCompareAll"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Database Gabungan Riil: Lidah Wetan & Ketintang
+    const databaseGedung = [
+        // --- DATA CAMPUS LIDAH WETAN ---
+        { nama: "Kolam Renang Unesa", wilayah: "LIDAH_WETAN", kwh: 18591, tagihan: 16731900, kvarhDenda: 0 },
+        { nama: "Asrama Unesa", wilayah: "LIDAH_WETAN", kwh: 12576, tagihan: 21373289, kvarhDenda: 0 },
+        { nama: "PPG Unesa", wilayah: "LIDAH_WETAN", kwh: 39849, tagihan: 31373908, kvarhDenda: 7529500 },
+        { nama: "Sport Science", wilayah: "LIDAH_WETAN", kwh: 7893, tagihan: 7103700, kvarhDenda: 0 },
+        { nama: "SMP Laboratorium Unesa", wilayah: "LIDAH_WETAN", kwh: 30148, tagihan: 22979775, kvarhDenda: 19340825 },
+        { nama: "Unesa Gedung Pendidikan", wilayah: "LIDAH_WETAN", kwh: 134040, tagihan: 104385615, kvarhDenda: 11911225 },
+        { nama: "Asrama Putri 1 Unesa", wilayah: "LIDAH_WETAN", kwh: 23809, tagihan: 34396862, kvarhDenda: 0 },
+        { nama: "Asrama Putri 2 Unesa", wilayah: "LIDAH_WETAN", kwh: 8202, tagihan: 11849429, kvarhDenda: 0 },
+        { nama: "Gedung Futsal Unesa", wilayah: "LIDAH_WETAN", kwh: 15641, tagihan: 22596555, kvarhDenda: 0 },
+        { nama: "Gedung CPD Unesa", wilayah: "LIDAH_WETAN", kwh: 88390, tagihan: 69168278, kvarhDenda: 7085500 },
+        { nama: "Gedung Fakultas Seni Unesa", wilayah: "LIDAH_WETAN", kwh: 32024, tagihan: 24786773, kvarhDenda: 12802000 },
+        { nama: "Gedung Perpustakaan Unesa", wilayah: "LIDAH_WETAN", kwh: 45321, tagihan: 35415240, kvarhDenda: 15620475 },
+        { nama: "Gedung Basket Indoor", wilayah: "LIDAH_WETAN", kwh: 8245, tagihan: 7420500, kvarhDenda: 0 },
+        { nama: "Rusun Unesa Surabaya", wilayah: "LIDAH_WETAN", kwh: 17362, tagihan: 15625800, kvarhDenda: 0 },
+        { nama: "Lab Anti Dopping Unesa", wilayah: "LIDAH_WETAN", kwh: 24370, tagihan: 18983948, kvarhDenda: 24671600 },
+        { nama: "Gedung Psikologi Unesa", wilayah: "LIDAH_WETAN", kwh: 35958, tagihan: 27695535, kvarhDenda: 9376725 },
+        { nama: "G. Kuliah Bersama OR dan Kes", wilayah: "LIDAH_WETAN", kwh: 14634, tagihan: 13170600, kvarhDenda: 0 },
+        { nama: "FIKK Gedung U1/U2", wilayah: "LIDAH_WETAN", kwh: 49706, tagihan: 44735400, kvarhDenda: 0 },
+        { nama: "Gedung Sawunggaling Unesa", wilayah: "LIDAH_WETAN", kwh: 15304, tagihan: 13737600, kvarhDenda: 0 },
+        
+        // --- DATA CAMPUS KETINTANG ---
+        { nama: "IKIP / Universitas Negeri Surabaya", wilayah: "KETINTANG", kwh: 72526, tagihan: 56714805, kvarhDenda: 0 },
+        { nama: "UNIV P3B-UNESA / Laboratorium", wilayah: "KETINTANG", kwh: 7413, tagihan: 6671700, kvarhDenda: 0 },
+        { nama: "Kampus UNESA (Ketintang)", wilayah: "KETINTANG", kwh: 2952, tagihan: 2656800, kvarhDenda: 0 },
+        { nama: "BUSEM UNESA", wilayah: "KETINTANG", kwh: 1827, tagihan: 1644300, kvarhDenda: 0 },
+        { nama: "Gedung Pusat Nalar UNESA", wilayah: "KETINTANG", kwh: 2391, tagihan: 3454278, kvarhDenda: 0 },
+        { nama: "Gedung UNESA Science", wilayah: "KETINTANG", kwh: 13694, tagihan: 10486980, kvarhDenda: 0 },
+        { nama: "Gedung UKM Center", wilayah: "KETINTANG", kwh: 656, tagihan: 5904000, kvarhDenda: 0 }
+    ];
+
+    let liveCharts = {};
+
+    function renderDashboard() {
+        const selectedRegion = document.getElementById('regionFilter').value;
+        const viewMode = document.getElementById('viewMode').value;
+        const totalArea = parseFloat(document.getElementById('totalArea').value) || 1;
+
+        // Toggle Tampilan Section HTML
+        if (viewMode === 'summary') {
+            document.getElementById('summarySection').classList.remove('d-none');
+            document.getElementById('detailSection').classList.add('d-none');
+        } else {
+            document.getElementById('summarySection').classList.add('d-none');
+            document.getElementById('detailSection').classList.remove('d-none');
+        }
+
+        // Jalankan Filter Wilayah Data
+        let filteredData = databaseGedung;
+        if (selectedRegion !== "SEMUA") {
+            filteredData = databaseGedung.filter(item => item.wilayah === selectedRegion);
+        }
+
+        // Kalkulasi Total Parameter Makro
+        let totalKwh = 0, totalCost = 0;
+        filteredData.forEach(d => {
+            totalKwh += d.kwh;
+            totalCost += d.tagihan;
+        });
+        let totalCarbon = totalKwh * 0.85;
+        let geci = totalCarbon / totalArea;
+
+        // Push ke UI Card Meter
+        document.getElementById('mTotalKwh').innerHTML = `${Math.round(totalKwh).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span>`;
+        document.getElementById('mTotalCarbon').innerHTML = `${Math.round(totalCarbon).toLocaleString('id-ID')} <span class="fs-6 text-muted">kg CO₂</span>`;
+        document.getElementById('mGeci').innerHTML = `${geci.toFixed(2)} <span class="fs-6 text-muted">kg CO₂/m²</span>`;
+        document.getElementById('mTotalCost').innerText = `Rp ${totalCost.toLocaleString('id-ID')}`;
+
+        // Pengolahan Grafik Batang Horizontal - Kontributor Terbesar
+        let sortedData = [...filteredData].sort((a, b) => b.kwh - a.kwh);
+        let topGedungData = sortedData.slice(0, 10);
+
+        if (liveCharts.topCarbon) liveCharts.topCarbon.destroy();
+        let ctx1 = document.getElementById('chartTopCarbon').getContext('2d');
+        liveCharts.topCarbon = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: topGedungData.map(d => d.nama),
+                datasets: [{
+                    label: 'Jejak Karbon Aktual (kg CO₂)',
+                    data: topGedungData.map(d => Math.round(d.kwh * 0.85)),
+                    backgroundColor: 'rgba(46, 204, 113, 0.85)',
+                    borderColor: '#2ecc71',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
+        });
+
+        // Pengolahan Grafik Komparatif Semua Jalur Gedung
+        if (liveCharts.compareAll) liveCharts.compareAll.destroy();
+        let ctx2 = document.getElementById('chartCompareAll').getContext('2d');
+        liveCharts.compareAll = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: filteredData.map(d => d.nama),
+                datasets: [
+                    {
+                        label: 'Total Konsumsi Listrik (kWh)',
+                        data: filteredData.map(d => d.kwh),
+                        backgroundColor: 'rgba(52, 152, 219, 0.75)'
+                    },
+                    {
+                        label: 'Dampak Emisi Lingkungan (kg CO₂)',
+                        data: filteredData.map(d => Math.round(d.kwh * 0.85)),
+                        backgroundColor: 'rgba(231, 76, 60, 0.75)'
+                    }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 } } } }
+        });
+
+        // Logika Alert Peringatan Sistem Audit
+        let alertContainer = document.getElementById('auditAlerts');
+        alertContainer.innerHTML = "";
+        
+        let flaggedAlerts = 0;
+        filteredData.forEach(d => {
+            if (d.kvarhDenda > 0) {
+                flaggedAlerts++;
+                alertContainer.innerHTML += `
+                    <div class="alert alert-danger p-2 mb-2" style="font-size: 13px; border-left: 4px solid #c0392b;">
+                        <i class="fa-solid fa-circle-exclamation text-danger"></i> <b>${d.nama}</b><br>
+                        Kebocoran daya reaktif! Beban denda kVArh: <b>Rp ${d.kvarhDenda.toLocaleString('id-ID')}</b>. Teliti kesiapan Kapasitor Bank.
+                    </div>`;
+            }
+        });
+
+        if (flaggedAlerts === 0) {
+            alertContainer.innerHTML = `<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-check text-success fs-2 mb-2"></i><br>Faktor daya kelistrikan seluruh gedung aman dan optimal.</div>`;
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', renderDashboard);
+</script>
+</body>
+</html>
