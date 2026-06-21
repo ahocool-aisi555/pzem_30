@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Analisis Power & Emisi Gedung</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: none; margin-bottom: 25px; }
+        .header-title { color: #2c3e50; font-weight: 700; }
+        .chart-container { position: relative; height: 240px; width: 100%; }
+        .metric-card { border-left: 5px solid #2ecc71; }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+    <div class="text-center mb-4">
+        <h1 class="header-title">🏢 Laporan Analisis Power & Emisi Gedung</h1>
+        <p class="text-muted">By Unesa Smart Energy | Cetak: {{ current_time }}</p>
+    </div>
+
+    <div class="card p-4">
+        <form method="POST" action="/" id="filterForm" class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Rentang Analisis</label>
+                <select name="mode" id="selectedMode" class="form-select bg-light fw-bold text-primary">
+                    <option value="harian" {% if selected_mode == 'harian' %}selected{% endif %}>📅 Harian (Menit)</option>
+                    <option value="mingguan" {% if selected_mode == 'mingguan' %}selected{% endif %}>📊 Mingguan (7 Hari)</option>
+                    <option value="bulanan" {% if selected_mode == 'bulanan' %}selected{% endif %}>📈 Bulanan (30 Hari)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Pilihan Menu Laporan</label>
+                <select name="slave_id" id="selectedId" class="form-select fw-bold text-dark">
+                    <option value="Semua_Watt" {% if selected_id == 'Semua_Watt' or selected_id == 'Semua' %}selected{% endif %}>⚡ Semua ID (Grafik Daya - Watt)</option>
+                    <option value="Semua_Carbon" {% if selected_id == 'Semua_Carbon' %}selected{% endif %}>🍃 Semua ID (Grafik Emisi Carbon)</option>
+                    <option value="TOTAL" {% if selected_id == 'TOTAL' %}selected{% endif %}>🏢 TOTAL (Akumulasi & Carbon Print)</option>
+                    
+                    <option disabled>──────────────────────────────</option>
+                    {% for i in range(1, 31) %}
+                    <option value="{{ i }}" {% if selected_id == i|string %}selected{% endif %}>ID Meter {{ i }} </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Pilih Tanggal</label>
+                <input type="date" name="tanggal" class="form-control" value="{{ selected_date }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Luas Lantai (m²)</label>
+                <input type="number" id="luasLantai" class="form-control fw-bold text-danger" value="150" min="1" oninput="recalculateTotalIntensity()">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm">🚀 Tarik Data</button>
+            </div>
+        </form>
+    </div>
+
+    {% if selected_id == "Semua_Watt" or selected_id == "Semua" %}
+        <h4 class="mb-3 text-primary fw-bold text-center">Analisis Beban Daya Listrik: 30 Jalur MCB (Watt)</h4>
+        <div class="row">
+            {% for i in range(1, 31) %}
+            <div class="col-12">
+                <div class="card p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="fw-bold m-0 text-dark">⚡ POWER METER ID {{ i }}</h6>
+                        <span class="badge bg-primary">Daya Aktif (Watt)</span>
+                    </div>
+                    <div class="chart-container"><canvas id="chartWatt_{{ i }}"></canvas></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    {% elif selected_id == "Semua_Carbon" %}
+        <h4 class="mb-3 text-success fw-bold text-center">Analisis Jejak Emisi Karbon Aktual: 30 Jalur MCB (gram CO₂)</h4>
+        <div class="row">
+            {% for i in range(1, 31) %}
+            <div class="col-12">
+                <div class="card p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="fw-bold m-0 text-dark">🍃 CARBON FOOTPRINT ID {{ i }}</h6>
+                        <span class="badge bg-success">Emisi (gram CO₂)</span>
+                    </div>
+                    <div class="chart-container"><canvas id="chartCarbon_{{ i }}"></canvas></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    {% elif selected_id == "TOTAL" %}
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card p-3 metric-card bg-white">
+                    <small class="text-muted fw-bold text-uppercase">Total Konsumsi Energi Lantai</small>
+                    <h2 class="text-dark fw-bold my-1"><span id="txtTotalKwh">0</span> <small class="fs-6 text-muted">kWh</small></h2>
+                    <span class="small text-muted">Gabungan seluruh pemakaian</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-3 metric-card bg-white" style="border-left-color: #e67e22;">
+                    <small class="text-muted fw-bold text-uppercase">Total Carbon Print Lantai</small>
+                    <h2 class="text-dark fw-bold my-1"><span id="txtTotalCarbon">0</span> <small class="fs-6 text-muted">kg CO₂</small></h2>
+                    <span class="small text-muted">Dampak lingkungan tidak langsung</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-3 metric-card bg-success text-white" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">
+                    <small class="fw-bold text-uppercase text-white-50">Intensitas Emisi Gedung</small>
+                    <h2 class="fw-bold my-1"><span id="txtIntensitas">0</span> <small class="fs-6 text-white-50">g CO₂ / m²</small></h2>
+                    <span class="small text-white-50">Indikator Efisiensi Luas Bangunan</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-12 text-center">
+                <div class="btn-group shadow-sm">
+                    <input type="radio" class="btn-check" name="totalViewParam" id="totalWattRadio" checked onclick="switchTotalChart('watt')">
+                    <label class="btn btn-outline-dark fw-bold px-4" for="totalWattRadio">⚡ Lihat Grafik Watt Total</label>
+                    <input type="radio" class="btn-check" name="totalViewParam" id="totalCarbonRadio" onclick="switchTotalChart('carbon')">
+                    <label class="btn btn-outline-success fw-bold px-4" for="totalCarbonRadio">🍃 Lihat Grafik Carbon Total</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card p-4">
+                    <h5 class="fw-bold text-dark mb-3 text-center" id="totalChartTitle">Grafik Akumulasi Daya Beban Total Lantai (Watt)</h5>
+                    <div class="chart-container" style="height: 400px;"><canvas id="chartTotalAccumulated"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <h4 class="mb-3 text-secondary fw-bold">Analisis Parameter Lengkap: ID {{ selected_id }}</h4>
+        <div class="row">
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartVolt"></canvas></div></div>
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartAmpere"></canvas></div></div>
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartWatt"></canvas></div></div>
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartEnergy"></canvas></div></div>
+			<div class="col-md-6"><div class="card p-3"><canvas id="chartHz"></canvas></div></div>
+            <div class="col-md-6"><div class="card p-3"><canvas id="chartPF"></canvas></div></div>
+        </div>
+    {% endif %}
+</div>
+
+<script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+<script>
+    const rawData = {{ logs | tojson }};
+    const labelsX = [...new Set(rawData.map(item => item.time))].sort();
+    const mode = "{{ selected_mode }}";
+    const currentMenu = "{{ selected_id }}";
+    
+    let carbonMultiplier = mode === "harian" ? (0.85 / 60) : (mode === "bulanan" ? (0.85 * 24) : 0.85);
+
+    // ==========================================
+    // 1. LOGIKA RENDER SEMUA ID (WATT)
+    // ==========================================
+    if (currentMenu === "Semua_Watt" || currentMenu === "Semua") {
+        for (let id = 1; id <= 30; id++) {
+            const canvas = document.getElementById(`chartWatt_${id}`);
+            if (!canvas) continue;
+
+            const dataDaya = labelsX.map(x => (rawData.find(item => item.time === x && parseInt(item.id) === id)?.power || 0));
+
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labelsX,
+                    datasets: [{ label: 'Watt', data: dataDaya, borderColor: '#3498db', pointRadius: 0, fill: true, backgroundColor: 'rgba(52, 152, 219, 0.05)', borderWidth: 2 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+    }
+    
+    // ==========================================
+    // 2. LOGIKA RENDER SEMUA ID (CARBON)
+    // ==========================================
+    else if (currentMenu === "Semua_Carbon") {
+        for (let id = 1; id <= 30; id++) {
+            const canvas = document.getElementById(`chartCarbon_${id}`);
+            if (!canvas) continue;
+
+            const dataCarbon = labelsX.map(x => {
+                const p = rawData.find(item => item.time === x && parseInt(item.id) === id)?.power || 0;
+                return parseFloat((p * carbonMultiplier).toFixed(1));
+            });
+
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labelsX,
+                    datasets: [{ label: 'gram CO₂', data: dataCarbon, borderColor: '#2ecc71', pointRadius: 0, fill: true, backgroundColor: 'rgba(46, 204, 113, 0.05)', borderWidth: 2 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+    }
+
+    // ==========================================
+    // 3. LOGIKA RENDER TOTAL (LANTAI GEDUNG)
+    // ==========================================
+    else if (currentMenu === "TOTAL") {
+        let totalAccumulatedCarbonKg = 0;
+        let totalAccumulatedKwh = 0;
+
+        // Hitung garis timeline akumulasi total
+        const timelineWattTotal = labelsX.map(x => {
+            let sumWatt = 0;
+            for (let id = 1; id <= 30; id++) {
+                sumWatt += (rawData.find(item => item.time === x && parseInt(item.id) === id)?.power || 0);
+            }
+            return sumWatt;
+        });
+
+        const timelineCarbonTotal = timelineWattTotal.map(w => {
+            let cGram = w * carbonMultiplier;
+            totalAccumulatedCarbonKg += (cGram / 1000);
+            totalAccumulatedKwh += (w / 1000); // Estimasi kwh berjalan
+            return parseFloat(cGram.toFixed(1));
+        });
+
+        // Set Nilai KPI Statis atas layar
+        document.getElementById("txtTotalKwh").innerText = Math.round(totalAccumulatedKwh).toLocaleString('id-ID');
+        document.getElementById("txtTotalCarbon").innerText = Math.round(totalAccumulatedCarbonKg).toLocaleString('id-ID');
+
+        // Bikin Objek Chart Total
+        const ctxTotal = document.getElementById('chartTotalAccumulated').getContext('2d');
+        const mainTotalChart = new Chart(ctxTotal, {
+            type: 'line',
+            data: {
+                labels: labelsX,
+                datasets: [{ label: 'Total Daya (Watt)', data: timelineWattTotal, borderColor: '#34495e', borderWidth: 3, fill: true, backgroundColor: 'rgba(52, 73, 94, 0.05)', tension: 0.1 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Fungsi Saklar Parameter Grafik di Menu TOTAL
+        window.switchTotalChart = function(type) {
+            const title = document.getElementById("totalChartTitle");
+            if (type === 'carbon') {
+                title.innerText = "Grafik Dampak Emisi Karbon Kumulatif Lantai (gram CO₂)";
+                mainTotalChart.data.datasets[0].label = "Total Emisi (g CO₂)";
+                mainTotalChart.data.datasets[0].data = timelineCarbonTotal;
+                mainTotalChart.data.datasets[0].borderColor = '#27ae60';
+                mainTotalChart.data.datasets[0].backgroundColor = 'rgba(39, 174, 96, 0.05)';
+            } else {
+                title.innerText = "Grafik Akumulasi Daya Beban Total Lantai (Watt)";
+                mainTotalChart.data.datasets[0].label = "Total Daya (Watt)";
+                mainTotalChart.data.datasets[0].data = timelineWattTotal;
+                mainTotalChart.data.datasets[0].borderColor = '#34495e';
+                mainTotalChart.data.datasets[0].backgroundColor = 'rgba(52, 73, 94, 0.05)';
+            }
+            mainTotalChart.update();
+        }
+
+        // Hitung Intensitas berdasarkan input Luas m²
+        window.recalculateTotalIntensity = function() {
+            const luas = parseFloat(document.getElementById("luasLantai").value) || 1;
+            const intensitas = (totalAccumulatedCarbonKg * 1000) / luas;
+            document.getElementById("txtIntensitas").innerText = Math.round(intensitas).toLocaleString('id-ID');
+        }
+
+        recalculateTotalIntensity(); // Triger pertama saat buka
+    }
+
+    // ==========================================
+    // 4. LOGIKA RENDER INDIVIDUAL MCB DETAILED
+    // ==========================================
+    else {
+        const dataVolt = labelsX.map(x => (rawData.find(i => i.time === x)?.voltage || 0));
+        const dataAmpere = labelsX.map(x => (rawData.find(i => i.time === x)?.current || 0));
+        const dataWatt = labelsX.map(x => (rawData.find(i => i.time === x)?.power || 0));
+        const dataEnergy = labelsX.map(x => (rawData.find(i => i.time === x)?.energy || 0));
+		const dataHz = labelsX.map(x => (rawData.find(i => i.time === x)?.frequency || 0));
+        const dataPF = labelsX.map(x => (rawData.find(i => i.time === x)?.pf || 0));
+
+        const createChart = (canvasId, label, data, color) => {
+            new Chart(document.getElementById(canvasId), {
+                type: 'line',
+                data: { labels: labelsX, datasets: [{ label: label, data: data, borderColor: color, tension: 0.1 }] },
+                options: { responsive: true }
+            });
+        };
+        createChart('chartVolt', 'Tegangan (Volt)', dataVolt, '#e74c3c');
+        createChart('chartAmpere', 'Arus (Ampere)', dataAmpere, '#e67e22');
+        createChart('chartWatt', 'Daya (Watt)', dataWatt, '#2ecc71');
+        createChart('chartEnergy', 'Energi (Wh)', dataEnergy, '#9b59b6');
+		createChart('chartHz', 'Frekuensi (Hz)', dataHz, '#1abc9c');
+        createChart('chartPF', 'Power Factor (PF)', dataPF, '#34495e');
+    }
+</script>
+</body>
+</html>
