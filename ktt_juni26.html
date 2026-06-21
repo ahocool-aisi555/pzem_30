@@ -198,7 +198,7 @@
             options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
         });
 
-        // 2. GRAFIK DETIL BAR (STACKED) - LWBP VS WBP PER GEDUNG
+// 2. GRAFIK DETIL BAR (STACKED) - LWBP VS WBP PER GEDUNG
         if (currentCharts.breakdown) currentCharts.breakdown.destroy();
         let ctx2 = document.getElementById('chartBreakdown').getContext('2d');
         currentCharts.breakdown = new Chart(ctx2, {
@@ -224,6 +224,30 @@
                 scales: {
                     x: { stacked: true, ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 } },
                     y: { stacked: true }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                let value = context.parsed.y || 0;
+                                
+                                // Mengambil data dataset pertama (LWBP) dan kedua (WBP) untuk gedung ini
+                                let chartData = context.chart.data;
+                                let lwbpValue = chartData.datasets[0].data[context.dataIndex] || 0;
+                                let wbpValue = chartData.datasets[1].data[context.dataIndex] || 0;
+                                let totalGedung = lwbpValue + wbpValue;
+                                
+                                // Hitung persentase kontribusi
+                                let percentage = totalGedung > 0 ? ((value / totalGedung) * 100).toFixed(1) : 0;
+                                
+                                if (label) {
+                                    label = label.split(':')[0]; // Ambil nama label dasar
+                                }
+                                return `${label}: ${value.toLocaleString('id-ID')} kWh (${percentage}%)`;
+                            }
+                        }
+                    }
                 }
             }
         });
