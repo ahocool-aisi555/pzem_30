@@ -20,7 +20,7 @@
 <div class="container py-4">
     <div class="text-center mb-4">
         <h1 class="header-title">🏢 Dashboard Analisis Energi & Emisi Gedung</h1>
-        <p class="text-muted">Unesa Smart Energy | Analisis Data Komprehensif Mei 2026</p>
+        <p class="text-muted">Unesa Smart Energy | Analisis Data Komprehensif (On Progress)</p>
     </div>
 
     <div class="card p-4">
@@ -34,18 +34,22 @@
                     <option value="TOTAL">🏢 TOTAL Akumulasi Gedung</option>
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
                 <label class="form-label fw-bold">Filter Rentang Waktu</label>
                 <select id="timeMode" class="form-select fw-bold text-dark" onchange="toggleDateInput()">
                     <option value="harian" selected>📅 Harian (Per Jam)</option>
                     <option value="full_bulan">📈 Full 1 Bulan (Mei 2026)</option>
                 </select>
             </div>
-            <div class="col-md-3" id="tanggalContainer">
+            <div class="col-md-2" id="tanggalContainer">
                 <label class="form-label fw-bold">Pilih Tanggal</label>
                 <input type="date" id="filterTanggal" class="form-control fw-bold text-primary" min="2026-05-01" max="2026-05-31" value="2026-05-04">
             </div>
-            <div class="col-md-2" id="btnContainer">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Luas Gedung (m²)</label>
+                <input type="number" id="buildingArea" class="form-control fw-bold text-success" value="5000" min="1" onchange="applyFilter()">
+            </div>
+            <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm py-2">🚀 Tarik Data</button>
             </div>
         </form>
@@ -72,16 +76,22 @@
 
     <div id="sectionTotal" class="hidden-section">
         <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card p-3 metric-card bg-white">
                     <small class="text-muted fw-bold">TOTAL KONSUMSI ENERGI</small>
                     <h2 class="fw-bold my-1 text-dark"><span id="txtTotalKwh">0</span> <small class="fs-6 text-muted">kWh</small></h2>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card p-3 metric-card bg-white" style="border-left-color: #e67e22;">
                     <small class="text-muted fw-bold">TOTAL JEJAK KARBON GEDUNG</small>
                     <h2 class="fw-bold my-1 text-dark"><span id="txtTotalCarbon">0</span> <small class="fs-6 text-muted">kg CO₂</small></h2>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-3 metric-card bg-white" style="border-left-color: #9b59b6;">
+                    <small class="text-muted fw-bold">INTENSITAS EMISI KARBON (GECI)</small>
+                    <h2 class="fw-bold my-1 text-dark"><span id="txtGeci">0</span> <small class="fs-6 text-muted">kg CO₂/m²</small></h2>
                 </div>
             </div>
         </div>
@@ -155,6 +165,7 @@
         const timeMode = document.getElementById('timeMode').value;
         const tglInput = document.getElementById('filterTanggal').value;
         const alertBox = document.getElementById('statusAlert');
+        const luasGedung = parseFloat(document.getElementById('buildingArea').value) || 1;
 
         // Menyembunyikan seluruh seksi
         ['sectionTotal', 'sectionSemuaWatt', 'sectionSemuaArus', 'sectionSemuaCarbon'].forEach(id => {
@@ -173,7 +184,7 @@
             alertBox.className = "alert alert-success text-center fw-bold";
             alertBox.innerText = `✅ Menampilkan data analisis harian tanggal: ${tglInput}`;
         } else {
-            filteredData = allMasterData; // Ambil semua data Mei 2026
+            filteredData = allMasterData; 
             alertBox.className = "alert alert-success text-center fw-bold";
             alertBox.innerText = `✅ Menampilkan analisis akumulasi penuh Bulan Mei 2026 (${filteredData.length} total baris data).`;
         }
@@ -231,14 +242,17 @@
                     if (t === x) sumWatt += item["DAYA(W)"];
                 });
                 
-                // Integrasi perhitungan energi total
                 totalKwh += (sumWatt / 1000); 
                 totalCarbonKg += ((sumWatt * carbonMultiplier) / 1000);
                 return Math.round(sumWatt);
             });
 
+            // Kalkulasi GECI (Total Emisi Karbon / Input Luas Gedung)
+            let geci = totalCarbonKg / luasGedung;
+
             document.getElementById("txtTotalKwh").innerText = Math.round(totalKwh).toLocaleString('id-ID');
             document.getElementById("txtTotalCarbon").innerText = Math.round(totalCarbonKg).toLocaleString('id-ID');
+            document.getElementById("txtGeci").innerText = geci.toFixed(2).toLocaleString('id-ID');
 
             let ctx = document.getElementById('chartTotalAccumulated').getContext('2d');
             mainTotalChart = new Chart(ctx, {
