@@ -28,43 +28,19 @@
             color: white;
             text-align: center;
         }
-        /* Container khusus untuk membingkai Logo Asli dengan Ornamen Green Energy */
-        .logo-wrapper {
-            position: relative;
-            width: 150px;
-            height: 150px;
-            margin: 0 auto 15px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Wadah untuk menampilkan logo resmi secara utuh dan bersih */
+        .logo-container {
+            margin-bottom: 20px;
         }
-        /* Ornamen Green Energy di sekeliling Logo */
-        .green-energy-ring {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border: 3px dashed #2ecc71;
-            border-radius: 50%;
-            animation: rotateRing 20s linear infinite;
-        }
-        .green-energy-ring::before {
-            content: '';
-            position: absolute;
-            top: -5px; left: 50%;
-            width: 12px; height: 12px;
-            background-color: #2ecc71;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #2ecc71;
-        }
-        .logo-wrapper img {
-            width: 110px;
+        .logo-container img {
+            width: 130px; /* Ukuran proporsional untuk logo kotak resmi */
             height: auto;
-            z-index: 2;
-            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.15));
+            border-radius: 8px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
         }
-        @keyframes rotateRing {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .logo-container img:hover {
+            transform: scale(1.03);
         }
         .menu-link {
             display: flex;
@@ -110,34 +86,16 @@
             
             <div class="card landing-card">
                 <div class="brand-header">
-                    <div class="logo-wrapper">
-                        <div class="green-energy-ring"></div>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130" width="110">
-                          <g fill="#ccaa2b">
-                            <path d="M70,100 C50,90 35,70 35,50 C35,35 45,25 50,20 C42,28 30,42 30,55 C30,72 48,92 70,100 Z"/>
-                            <path d="M73,92 C55,83 42,65 42,48 C42,35 50,25 55,20 C48,27 38,39 38,51 C38,67 53,85 73,92 Z"/>
-                            <path d="M76,84 C61,76 50,60 50,45 C50,34 56,26 60,22 C54,28 46,38 46,49 C46,62 59,77 76,84 Z"/>
-                            <path d="M80,75 C68,68 58,54 58,41 C58,32 63,25 66,22 C61,27 54,36 54,45 C54,56 66,69 80,75 Z"/>
-                          </g>
-                          <g fill="#ccaa2b">
-                            <path d="M130,100 C150,90 165,70 165,50 C165,35 155,25 150,20 C158,28 170,42 170,55 C170,72 152,92 130,100 Z"/>
-                            <path d="M127,92 C145,83 158,65 158,48 C158,35 150,25 145,20 C152,27 162,39 162,51 C162,67 147,85 127,92 Z"/>
-                            <path d="M124,84 C139,76 150,60 150,45 C150,34 144,26 140,22 C146,28 154,38 154,49 C154,62 141,77 124,84 Z"/>
-                            <path d="M120,75 C132,68 142,54 142,41 C142,32 137,25 134,22 C139,27 146,36 146,45 C146,56 134,69 120,75 Z"/>
-                          </g>
-                          <path d="M96,100 L98,25 L100,10 L102,25 L104,100 Z" fill="#ccaa2b"/>
-                          <polygon points="100,5 96,12 104,12" fill="#ccaa2b"/>
-                          <path d="M70,100 C85,108 115,108 130,100 C115,102 85,102 70,100 Z" fill="#ccaa2b"/>
-                          <text x="100" y="122" fill="#ccaa2b" font-family="'Segoe UI',Arial,sans-serif" font-weight="bold" font-size="16" text-anchor="middle" letter-spacing="3">UNESA</text>
-                        </svg>
+                    <div class="logo-container">
+                        <img src="logo.png" alt="Logo Resmi Universitas Negeri Surabaya">
                     </div>
                     <h3 class="fw-bold mb-1">UNIVERSITAS NEGERI SURABAYA</h3>
-                    <p class="mb-0 opacity-75 fs-6">Towards Smart and Green Energy Ecosystem</p>
+                    <p class="mb-0 opacity-75 fs-6">Unesa Smart Energy Ecosystem</p>
                 </div>
 
                 <div class="card-body p-4 p-sm-5">
                     <h4 class="text-center fw-bold mb-4 text-unesa-blue">
-                        <i class="fa-solid fa-square-poll-vertical text-energy-green"></i> Laporan Online Penggunaan Energi
+                        <i class="fa-solid fa-leaf text-energy-green"></i> Laporan Online Penggunaan Energi
                     </h4>
                     
                     <div class="menu-container">
@@ -154,7 +112,7 @@
 
                         <a href="ktt_juni26.html" class="menu-link">
                             <div class="menu-icon text-energy-green">
-                                <i class="fa-solid fa-leaf"></i>
+                                <i class="fa-solid fa-chart-line"></i>
                             </div>
                             <div class="flex-grow-1">
                                 <div>Laporan Bulanan Biaya dan Jejak Karbon</div>
