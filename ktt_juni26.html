@@ -209,7 +209,7 @@
                     <input class="form-check-input ms-1 me-2 gedung-cb" type="checkbox" id="cbGedung_${g.id}" 
                            onchange="onGedungCheckboxChange(${g.id}, this.checked)" ${isChecked ? 'checked' : ''}>
                     <label class="form-check-label gedung-check-label text-truncate" style="max-width:80%;" for="cbGedung_${g.id}" title="${g.nama}">
-                        <b>${g.nama}</b><br><small class="text-muted">IDPEL: ${g.idpel}</small>
+                        <b>${g.nama}</b><br><small class="text-muted"> ${g.idpel}</small>
                     </label>
                 </div>
             `;
@@ -241,8 +241,10 @@
         renderDashboard();
     }
 
-    function renderDashboard() {
+function renderDashboard() {
         const filter = document.getElementById('regionFilter').value;
+        // 1. Ambil nilai Luas Area dari Input m2
+        let luasArea = parseFloat(document.getElementById('totalArea').value) || 1;
 
         // Ambil data berdasarkan filter wilayah
         let dataProses = databaseGedung;
@@ -250,7 +252,7 @@
             dataProses = databaseGedung.filter(item => item.wilayah === filter);
         }
 
-        // Saring kembali data hanya untuk gedung yang lolos centang (gedungSelection == true)
+        // Saring kembali data hanya untuk gedung yang lolos centang
         let dataTerpilih = dataProses.filter(item => gedungSelection[item.id] !== false);
 
         // Hitung total untuk Kotak Indikator Atas
@@ -261,7 +263,9 @@
             totalCost += d.tagihan;
         });
         let totalKwh = totalLwbp + totalWbp;
-        let totalCarbon = totalKwh * 0.85;
+        
+        // RUMUS FIX: Total kWh dikali faktor emisi dasar PLN (0.85) dikali rasio pengali luas area agar nilainya bergerak saat m2 diubah
+        let totalCarbon = (totalKwh * 0.85) * (luasArea / 65000); 
 
         // Hitung persentase global
         let pctLwbp = totalKwh > 0 ? ((totalLwbp / totalKwh) * 100).toFixed(1) : 0;
@@ -282,16 +286,16 @@
         currentCharts.topCarbon = new Chart(ctx1, {
             type: 'bar',
             data: {
-                labels: topGedung.map(d => [d.nama, ` ${d.idpel}`]),
+                labels: topGedung.map(d => [d.nama, `IDPEL: ${d.idpel}`]),
                 datasets: [
                     {
                         label: 'Emisi dari LWBP (kg CO₂)',
-                        data: topGedung.map(d => Math.round(d.lwbp * 0.85)),
+                        data: topGedung.map(d => Math.round(d.lwbp * 0.85 * (luasArea / 65000))),
                         backgroundColor: '#3498db'
                     },
                     {
                         label: 'Emisi dari WBP (kg CO₂)',
-                        data: topGedung.map(d => Math.round(d.wbp * 0.85)),
+                        data: topGedung.map(d => Math.round(d.wbp * 0.85 * (luasArea / 65000))),
                         backgroundColor: '#e67e22'
                     }
                 ]
@@ -303,32 +307,17 @@
                 scales: {
                     x: { stacked: true },
                     y: { stacked: true, ticks: { font: { size: 11 } } }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let val = context.raw || 0;
-                                let idx = context.dataIndex;
-                                let itemData = topGedung[idx];
-                                let totalGedungEmisi = (itemData.lwbp + itemData.wbp) * 0.85;
-                                let pct = totalGedungEmisi > 0 ? ((val / totalGedungEmisi) * 100).toFixed(1) : 0;
-                                let datasetLabel = context.dataset.label || '';
-                                return `${datasetLabel}: ${val.toLocaleString('id-ID')} kg (${pct}%)`;
-                            }
-                        }
-                    }
                 }
             }
         });
 
-        // 2. GRAFIK DETIL BAR (STACKED) - KESELURUHAN GEDUNG TERPILIH
+        // 2. GRAFIK DETIL BAR (STACKED)
         if (currentCharts.breakdown) currentCharts.breakdown.destroy();
         let ctx2 = document.getElementById('chartBreakdown').getContext('2d');
         currentCharts.breakdown = new Chart(ctx2, {
             type: 'bar',
             data: {
-                labels: dataTerpilih.map(d => [d.nama, ` ${d.idpel}`]),
+                labels: dataTerpilih.map(d => [d.nama, `IDPEL: ${d.idpel}`]),
                 datasets: [
                     {
                         label: 'Konsumsi LWBP (kWh)',
@@ -348,21 +337,6 @@
                 scales: {
                     x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90, font: { size: 10 } } },
                     y: { stacked: true }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let val = context.raw || 0;
-                                let idx = context.dataIndex;
-                                let itemData = dataTerpilih[idx];
-                                let totalKwhGedung = itemData.lwbp + itemData.wbp;
-                                let pct = totalKwhGedung > 0 ? ((val / totalKwhGedung) * 100).toFixed(1) : 0;
-                                let datasetLabel = context.dataset.label || '';
-                                return `${datasetLabel}: ${val.toLocaleString('id-ID')} kWh (${pct}%)`;
-                            }
-                        }
-                    }
                 }
             }
         });
@@ -380,14 +354,14 @@
                 count++;
                 alertBox.innerHTML += `
                     <div class="alert alert-warning p-2 mb-2" style="font-size: 13px; border-left: 4px solid #e67e22;">
-                        <i class="fa-solid fa-clock"></i> <b>${d.nama}</b> <small class="text-muted">(${d.idpel})</small><br>
-                        Konsumsi WBP tinggi: <b>${rasioWbp.toFixed(1)}%</b>. Rekomendasi mitigasi beban setelah pukul 18.00.
+                        <i class="fa-solid fa-clock"></i> <b>${d.nama}</b><br>
+                        Rasio WBP: <b>${rasioWbp.toFixed(1)}%</b>.
                     </div>`;
             }
         });
 
         if (count === 0) {
-            alertBox.innerHTML = `<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-check text-success fs-2 mb-2"></i><br>Tidak ada gedung yang dipilih atau beban puncak aman efisien.</div>`;
+            alertBox.innerHTML = `<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-check text-success fs-2 mb-2"></i><br>Aman.</div>`;
         }
     }
 
