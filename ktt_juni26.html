@@ -241,6 +241,9 @@
         renderDashboard();
     }
 
+    function renderDashboard() {
+        const filter = document.getElementById('regionFilter').value;
+
 // 1. Ambil nilai Luas Area yang diinput user
         let totalAreaInput = parseFloat(document.getElementById('totalArea').value) || 1;
 
@@ -269,7 +272,7 @@
         document.getElementById('mCarbon').innerHTML = `${intensitasCarbon.toFixed(2)} <span class="fs-6 text-muted">kg CO₂/m²</span>`;
         
         document.getElementById('mCost').innerText = `Rp ${totalCost.toLocaleString('id-ID')}`;
-
+        
         // 1. GRAFIK TOP 10 EMISI CARBON
         let sortedData = [...dataTerpilih].sort((a, b) => (b.lwbp + b.wbp) - (a.lwbp + a.wbp));
         let topGedung = sortedData.slice(0, 10);
@@ -279,7 +282,7 @@
         currentCharts.topCarbon = new Chart(ctx1, {
             type: 'bar',
             data: {
-                labels: topGedung.map(d => [d.nama, ` ${d.idpel}`]),
+                labels: topGedung.map(d => [d.nama - ` ${d.idpel}`]),
                 datasets: [
                     {
                         label: 'Emisi dari LWBP (kg CO₂)',
@@ -325,7 +328,7 @@
         currentCharts.breakdown = new Chart(ctx2, {
             type: 'bar',
             data: {
-                labels: dataTerpilih.map(d => [d.nama, ` ${d.idpel}`]),
+                labels: dataTerpilih.map(d => [d.nama - ` ${d.idpel}`]),
                 datasets: [
                     {
                         label: 'Konsumsi LWBP (kWh)',
