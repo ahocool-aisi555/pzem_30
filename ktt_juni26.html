@@ -282,7 +282,7 @@
         currentCharts.topCarbon = new Chart(ctx1, {
             type: 'bar',
             data: {
-                labels: topGedung.map(d => [d.nama - ` ${d.idpel}`]),
+                labels: topGedung.map(d => [d.nama, ` ${d.idpel}`]),
                 datasets: [
                     {
                         label: 'Emisi dari LWBP (kg CO₂)',
@@ -328,7 +328,7 @@
         currentCharts.breakdown = new Chart(ctx2, {
             type: 'bar',
             data: {
-                labels: dataTerpilih.map(d => [d.nama - ` ${d.idpel}`]),
+                labels: dataTerpilih.map(d => [d.nama, ` ${d.idpel}`]),
                 datasets: [
                     {
                         label: 'Konsumsi LWBP (kWh)',
