@@ -12,6 +12,8 @@
         .metric-card { border-left: 6px solid; border-radius: 8px; transition: transform 0.2s; }
         .metric-card:hover { transform: translateY(-3px); }
         .bg-gradient-unesa { background: linear-gradient(135deg, #1e3c72 0%, #157347 100%); color: white; }
+        .gedung-check-label { font-size: 0.85rem; font-weight: 500; cursor: pointer; }
+        .check-container { max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; background: #fff; }
     </style>
 </head>
 <body>
@@ -26,7 +28,7 @@
         <div class="row g-3 align-items-center">
             <div class="col-md-3">
                 <label class="form-label fw-bold"><i class="fa-solid fa-map-location-dot text-primary"></i> Wilayah Kampus</label>
-                <select id="regionFilter" class="form-select fw-bold text-primary" onchange="renderDashboard()">
+                <select id="regionFilter" class="form-select fw-bold text-primary" onchange="resetSelectionAndRender()">
                     <option value="SEMUA" selected>🌍 Semua Kampus (Gabungan)</option>
                     <option value="LIDAH_WETAN">🏢 Kampus Lidah Wetan</option>
                     <option value="KETINTANG">🏫 Kampus Ketintang</option>
@@ -34,7 +36,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-bold"><i class="fa-solid fa-sliders text-secondary"></i> Mode Tampilan</label>
-                <select id="viewMode" class="form-select fw-bold" onchange="renderDashboard()">
+                <select id="viewMode" class="form-select fw-bold" onchange="toggleViewMode()">
                     <option value="summary" selected>📊 Ringkasan Beban & Temuan Audit</option>
                     <option value="per_gedung">🔍 Detail Penggunaan LWBP vs WBP</option>
                 </select>
@@ -50,34 +52,34 @@
         </div>
     </div>
 
-    <div id="summarySection">
-        <div class="row">
-            <div class="col-md-3">
-                <div class="card p-3 metric-card bg-white" style="border-left-color: #3498db;">
-                    <small class="text-muted fw-bold">KONSUMSI LWBP (22.00 - 18.00)</small>
-                    <h3 class="fw-bold my-1 text-dark" id="mLwbp">0 <span class="fs-6 text-muted">kWh</span></h3>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-3 metric-card bg-white" style="border-left-color: #e67e22;">
-                    <small class="text-muted fw-bold">KONSUMSI WBP (18.00 - 22.00)</small>
-                    <h3 class="fw-bold my-1 text-warning" id="mWbp">0 <span class="fs-6 text-muted">kWh</span></h3>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-3 metric-card bg-white" style="border-left-color: #2ecc71;">
-                    <small class="text-muted fw-bold">TOTAL JEJAK EMISI CO₂</small>
-                    <h3 class="fw-bold my-1 text-success" id="mCarbon">0 <span class="fs-6 text-muted">kg CO₂</span></h3>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-3 metric-card bg-white" style="border-left-color: #e74c3c;">
-                    <small class="text-muted fw-bold">TOTAL TAGIHAN REKENING</small>
-                    <h3 class="fw-bold my-1 text-danger" id="mCost">Rp 0</h3>
-                </div>
+    <div class="row mb-2">
+        <div class="col-md-3">
+            <div class="card p-3 metric-card bg-white" style="border-left-color: #3498db;">
+                <small class="text-muted fw-bold">KONSUMSI LWBP (22.00 - 18.00)</small>
+                <h3 class="fw-bold my-1 text-dark" id="mLwbp">0 <span class="fs-6 text-muted">kWh</span></h3>
             </div>
         </div>
+        <div class="col-md-3">
+            <div class="card p-3 metric-card bg-white" style="border-left-color: #e67e22;">
+                <small class="text-muted fw-bold">KONSUMSI WBP (18.00 - 22.00)</small>
+                <h3 class="fw-bold my-1 text-warning" id="mWbp">0 <span class="fs-6 text-muted">kWh</span></h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 metric-card bg-white" style="border-left-color: #2ecc71;">
+                <small class="text-muted fw-bold">TOTAL JEJAK EMISI CO₂</small>
+                <h3 class="fw-bold my-1 text-success" id="mCarbon">0 <span class="fs-6 text-muted">kg CO₂</span></h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 metric-card bg-white" style="border-left-color: #e74c3c;">
+                <small class="text-muted fw-bold">TOTAL TAGIHAN REKENING</small>
+                <h3 class="fw-bold my-1 text-danger" id="mCost">Rp 0</h3>
+            </div>
+        </div>
+    </div>
 
+    <div id="summarySection">
         <div class="row">
             <div class="col-md-8">
                 <div class="card p-4">
@@ -95,9 +97,26 @@
     </div>
 
     <div id="detailSection" class="d-none">
-        <div class="card p-4">
-            <h5 class="fw-bold mb-3"><i class="fa-solid fa-chart-gantt text-primary"></i> Proporsi Penggunaan Energi Keseluruhan: LWBP vs WBP</h5>
-            <div style="position: relative; height: 520px;"><canvas id="chartBreakdown"></canvas></div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card p-4 mb-4">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-chart-gantt text-primary"></i> Proporsi Penggunaan Energi Keseluruhan: LWBP vs WBP</h5>
+                    <div style="position: relative; height: 450px;"><canvas id="chartBreakdown"></canvas></div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-secondary m-0"><i class="fa-solid fa-filter"></i> Filter Centang Gedung (Masukkan dalam Perhitungan Kotak Atas & Grafik)</h6>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary fw-bold me-1" onclick="checkAllGedung(true)">Centang Semua</button>
+                            <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="checkAllGedung(false)">Hapus Semua</button>
+                        </div>
+                    </div>
+                    <div class="check-container" id="gedungSelectorContainer">
+                        </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -108,43 +127,48 @@
 <script>
     // Database Utama Gabungan Unesa dengan Pemetaan IDPEL PLN 12-Digit
     const databaseGedung = [
-        // --- DATA CAMPUS LIDAH WETAN ---
-        { idpel: "512010234561", nama: "Kolam Renang Unesa", wilayah: "LIDAH_WETAN", lwbp: 18591, wbp: 0, tagihan: 16731900 },
-        { idpel: "512010234562", nama: "Asrama Unesa", wilayah: "LIDAH_WETAN", lwbp: 12576, wbp: 0, tagihan: 21373289 },
-        { idpel: "512010234563", nama: "PPG Unesa", wilayah: "LIDAH_WETAN", lwbp: 34818, wbp: 5031, tagihan: 31373908 },
-        { idpel: "512010234564", nama: "Sport Science", wilayah: "LIDAH_WETAN", lwbp: 7893, wbp: 0, tagihan: 7103700 },
-        { idpel: "512010234565", nama: "SMP Laboratorium Unesa", wilayah: "LIDAH_WETAN", lwbp: 27914, wbp: 2234, tagihan: 22979775 },
-        { idpel: "512010234566", nama: "Unesa Gedung Pendidikan", wilayah: "LIDAH_WETAN", lwbp: 118102, wbp: 15938, tagihan: 104385615 },
-        { idpel: "512010234567", nama: "Asrama Putri 1 Unesa", wilayah: "LIDAH_WETAN", lwbp: 23809, wbp: 0, tagihan: 34396862 },
-        { idpel: "512010234568", nama: "Asrama Putri 2 Unesa", wilayah: "LIDAH_WETAN", lwbp: 8202, wbp: 0, tagihan: 11849429 },
-        { idpel: "512010234569", nama: "Gedung Futsal Unesa", wilayah: "LIDAH_WETAN", lwbp: 15641, wbp: 0, tagihan: 22596555 },
-        { idpel: "512010234570", nama: "Gedung CPD Unesa", wilayah: "LIDAH_WETAN", lwbp: 76957, wbp: 11433, tagihan: 69168278 },
-        { idpel: "512010234571", nama: "Gedung Fakultas Seni Unesa", wilayah: "LIDAH_WETAN", lwbp: 28625, wbp: 3399, tagihan: 24786773 },
-        { idpel: "512010234572", nama: "Gedung Perpustakaan Unesa", wilayah: "LIDAH_WETAN", lwbp: 39595, wbp: 5726, tagihan: 35415240 },
-        { idpel: "512010234573", nama: "Gedung Basket Indoor", wilayah: "LIDAH_WETAN", lwbp: 8245, wbp: 0, tagihan: 7420500 },
-        { idpel: "512010234574", nama: "Rusun Unesa Surabaya", wilayah: "LIDAH_WETAN", lwbp: 17362, wbp: 0, tagihan: 15625800 },
-        { idpel: "512010234575", nama: "Lab Anti Dopping Unesa", wilayah: "LIDAH_WETAN", lwbp: 21453, wbp: 2917, tagihan: 18983948 },
-        { idpel: "512010234576", nama: "Gedung Psikologi Unesa", wilayah: "LIDAH_WETAN", lwbp: 32512, wbp: 3446, tagihan: 27695535 },
-        { idpel: "512010234577", nama: "G. Kuliah Bersama OR dan Kes", wilayah: "LIDAH_WETAN", lwbp: 14634, wbp: 0, tagihan: 13170600 },
-        { idpel: "512010234578", nama: "FIKK Gedung U1/U2", wilayah: "LIDAH_WETAN", lwbp: 49706, wbp: 0, tagihan: 44735400 },
-        { idpel: "512010234579", nama: "Gedung Sawunggaling Unesa", wilayah: "LIDAH_WETAN", lwbp: 15304, wbp: 0, tagihan: 13737600 },
+        { id: 1, idpel: "512010234561", nama: "Kolam Renang Unesa", wilayah: "LIDAH_WETAN", lwbp: 18591, wbp: 0, tagihan: 16731900 },
+        { id: 2, idpel: "512010234562", nama: "Asrama Unesa", wilayah: "LIDAH_WETAN", lwbp: 12576, wbp: 0, tagihan: 21373289 },
+        { id: 3, idpel: "512010234563", nama: "PPG Unesa", wilayah: "LIDAH_WETAN", lwbp: 34818, wbp: 5031, tagihan: 31373908 },
+        { id: 4, idpel: "512010234564", nama: "Sport Science", wilayah: "LIDAH_WETAN", lwbp: 7893, wbp: 0, tagihan: 7103700 },
+        { id: 5, idpel: "512010234565", nama: "SMP Laboratorium Unesa", wilayah: "LIDAH_WETAN", lwbp: 27914, wbp: 2234, tagihan: 22979775 },
+        { id: 6, idpel: "512010234566", nama: "Unesa Gedung Pendidikan", wilayah: "LIDAH_WETAN", lwbp: 118102, wbp: 15938, tagihan: 104385615 },
+        { id: 7, idpel: "512010234567", nama: "Asrama Putri 1 Unesa", wilayah: "LIDAH_WETAN", lwbp: 23809, wbp: 0, tagihan: 34396862 },
+        { id: 8, idpel: "512010234568", nama: "Asrama Putri 2 Unesa", wilayah: "LIDAH_WETAN", lwbp: 8202, wbp: 0, tagihan: 11849429 },
+        { id: 9, idpel: "512010234569", nama: "Gedung Futsal Unesa", wilayah: "LIDAH_WETAN", lwbp: 15641, wbp: 0, tagihan: 22596555 },
+        { id: 10, idpel: "512010234570", nama: "Gedung CPD Unesa", wilayah: "LIDAH_WETAN", lwbp: 76957, wbp: 11433, tagihan: 69168278 },
+        { id: 11, idpel: "512010234571", nama: "Gedung Fakultas Seni Unesa", wilayah: "LIDAH_WETAN", lwbp: 28625, wbp: 3399, tagihan: 24786773 },
+        { id: 12, idpel: "512010234572", nama: "Gedung Perpustakaan Unesa", wilayah: "LIDAH_WETAN", lwbp: 39595, wbp: 5726, tagihan: 35415240 },
+        { id: 13, idpel: "512010234573", nama: "Gedung Basket Indoor", wilayah: "LIDAH_WETAN", lwbp: 8245, wbp: 0, tagihan: 7420500 },
+        { id: 14, idpel: "512010234574", nama: "Rusun Unesa Surabaya", wilayah: "LIDAH_WETAN", lwbp: 17362, wbp: 0, tagihan: 15625800 },
+        { id: 15, idpel: "512010234575", nama: "Lab Anti Dopping Unesa", wilayah: "LIDAH_WETAN", lwbp: 21453, wbp: 2917, tagihan: 18983948 },
+        { id: 16, idpel: "512010234576", nama: "Gedung Psikologi Unesa", wilayah: "LIDAH_WETAN", lwbp: 32512, wbp: 3446, tagihan: 27695535 },
+        { id: 17, idpel: "512010234577", nama: "G. Kuliah Bersama OR dan Kes", wilayah: "LIDAH_WETAN", lwbp: 14634, wbp: 0, tagihan: 13170600 },
+        { id: 18, idpel: "512010234578", nama: "FIKK Gedung U1/U2", wilayah: "LIDAH_WETAN", lwbp: 49706, wbp: 0, tagihan: 44735400 },
+        { id: 19, idpel: "512010234579", nama: "Gedung Sawunggaling Unesa", wilayah: "LIDAH_WETAN", lwbp: 15304, wbp: 0, tagihan: 13737600 },
         
-        // --- DATA CAMPUS KETINTANG ---
-        { idpel: "512011234501", nama: "IKIP / Universitas Negeri Surabaya", wilayah: "KETINTANG", lwbp: 63252, wbp: 9274, tagihan: 56714805 },
-        { idpel: "512011234502", nama: "UNIV P3B-UNESA / Laboratorium", wilayah: "KETINTANG", lwbp: 7413, wbp: 0, tagihan: 6671700 },
-        { idpel: "512011234503", nama: "Kampus UNESA (Ketintang)", wilayah: "KETINTANG", lwbp: 2952, wbp: 0, tagihan: 2656800 },
-        { idpel: "512011234504", nama: "BUSEM UNESA", wilayah: "KETINTANG", lwbp: 1827, wbp: 0, tagihan: 1644300 },
-        { idpel: "512011234505", nama: "Gedung Pusat Nalar UNESA", wilayah: "KETINTANG", lwbp: 2391, wbp: 0, tagihan: 3454278 },
-        { idpel: "512011234506", nama: "Gedung UNESA Science", wilayah: "KETINTANG", lwbp: 12546, wbp: 1148, tagihan: 10486980 },
-        { idpel: "512011234507", nama: "Gedung UKM Center", wilayah: "KETINTANG", lwbp: 656, wbp: 0, tagihan: 5904000 }
+        { id: 20, idpel: "512011234501", nama: "IKIP / Universitas Negeri Surabaya", wilayah: "KETINTANG", lwbp: 63252, wbp: 9274, tagihan: 56714805 },
+        { id: 21, idpel: "512011234502", nama: "UNIV P3B-UNESA / Laboratorium", wilayah: "KETINTANG", lwbp: 7413, wbp: 0, tagihan: 6671700 },
+        { id: 22, idpel: "512011234503", nama: "Kampus UNESA (Ketintang)", wilayah: "KETINTANG", lwbp: 2952, wbp: 0, tagihan: 2656800 },
+        { id: 23, idpel: "512011234504", nama: "BUSEM UNESA", wilayah: "KETINTANG", lwbp: 1827, wbp: 0, tagihan: 1644300 },
+        { id: 24, idpel: "512011234505", nama: "Gedung Pusat Nalar UNESA", wilayah: "KETINTANG", lwbp: 2391, wbp: 0, tagihan: 3454278 },
+        { id: 25, idpel: "512011234506", nama: "Gedung UNESA Science", wilayah: "KETINTANG", lwbp: 12546, wbp: 1148, tagihan: 10486980 },
+        { id: 26, idpel: "512011234507", nama: "Gedung UKM Center", wilayah: "KETINTANG", lwbp: 656, wbp: 0, tagihan: 5904000 }
     ];
 
     let currentCharts = {};
+    // Objek penyimpan status pilihan checkbox gedung (True = Dihitung, False = Dikeluarkan)
+    let gedungSelection = {};
 
-    function renderDashboard() {
-        const filter = document.getElementById('regionFilter').value;
+    // Inisialisasi awal status pilihan gedung
+    function initSelectionStates() {
+        databaseGedung.forEach(g => {
+            gedungSelection[g.id] = true;
+        });
+    }
+
+    function toggleViewMode() {
         const mode = document.getElementById('viewMode').value;
-
         if (mode === 'summary') {
             document.getElementById('summarySection').classList.remove('d-none');
             document.getElementById('detailSection').classList.add('d-none');
@@ -152,14 +176,86 @@
             document.getElementById('summarySection').classList.add('d-none');
             document.getElementById('detailSection').classList.remove('d-none');
         }
+        renderDashboard();
+    }
 
+    function resetSelectionAndRender() {
+        // Saat filter wilayah diubah, centang semua gedung kembali ke default aktif
+        initSelectionStates();
+        renderGedungSelector();
+        renderDashboard();
+    }
+
+    // Fungsi menggambar item checkbox gedung di bawah grafik detail
+    function renderGedungSelector() {
+        const filter = document.getElementById('regionFilter').value;
+        const container = document.getElementById('gedungSelectorContainer');
+        container.innerHTML = '';
+
+        let dataFilter = databaseGedung;
+        if (filter !== "SEMUA") {
+            dataFilter = databaseGedung.filter(item => item.wilayah === filter);
+        }
+
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'row text-dark';
+
+        dataFilter.forEach(g => {
+            const isChecked = gedungSelection[g.id] !== false;
+            const col = document.createElement('div');
+            col.className = 'col-xl-3 col-md-4 col-sm-6 mb-2';
+            col.innerHTML = `
+                <div class="form-check border p-2 rounded bg-light shadow-sm">
+                    <input class="form-check-input ms-1 me-2 gedung-cb" type="checkbox" id="cbGedung_${g.id}" 
+                           onchange="onGedungCheckboxChange(${g.id}, this.checked)" ${isChecked ? 'checked' : ''}>
+                    <label class="form-check-label gedung-check-label text-truncate" style="max-width:80%;" for="cbGedung_${g.id}" title="${g.nama}">
+                        <b>${g.nama}</b><br><small class="text-muted"> ${g.idpel}</small>
+                    </label>
+                </div>
+            `;
+            rowDiv.appendChild(col);
+        });
+        container.appendChild(rowDiv);
+    }
+
+    function onGedungCheckboxChange(id, isChecked) {
+        gedungSelection[id] = isChecked;
+        renderDashboard();
+    }
+
+    function checkAllGedung(status) {
+        const filter = document.getElementById('regionFilter').value;
+        let dataFilter = databaseGedung;
+        if (filter !== "SEMUA") {
+            dataFilter = databaseGedung.filter(item => item.wilayah === filter);
+        }
+        
+        dataFilter.forEach(g => {
+            gedungSelection[g.id] = status;
+        });
+
+        // Set visual checkbox di UI
+        const checkboxes = document.querySelectorAll('.gedung-cb');
+        checkboxes.forEach(cb => cb.checked = status);
+
+        renderDashboard();
+    }
+
+    function renderDashboard() {
+        const filter = document.getElementById('regionFilter').value;
+
+        // Ambil data berdasarkan filter wilayah
         let dataProses = databaseGedung;
         if (filter !== "SEMUA") {
             dataProses = databaseGedung.filter(item => item.wilayah === filter);
         }
 
+        // Saring kembali data hanya untuk gedung yang lolos centang (gedungSelection == true)
+        let dataTerpilih = dataProses.filter(item => gedungSelection[item.id] !== false);
+
+        // Hitung total untuk Kotak Indikator Atas
         let totalLwbp = 0, totalWbp = 0, totalCost = 0;
-        dataProses.forEach(d => {
+        dataTerpilih.forEach(d => {
             totalLwbp += d.lwbp;
             totalWbp += d.wbp;
             totalCost += d.tagihan;
@@ -171,14 +267,14 @@
         let pctLwbp = totalKwh > 0 ? ((totalLwbp / totalKwh) * 100).toFixed(1) : 0;
         let pctWbp = totalKwh > 0 ? ((totalWbp / totalKwh) * 100).toFixed(1) : 0;
 
-        // Update Kartu Atas dengan Persentase
+        // Update Kartu Atas
         document.getElementById('mLwbp').innerHTML = `${Math.round(totalLwbp).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span> <span class="badge bg-primary ms-1">${pctLwbp}%</span>`;
         document.getElementById('mWbp').innerHTML = `${Math.round(totalWbp).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span> <span class="badge bg-warning text-dark ms-1">${pctWbp}%</span>`;
         document.getElementById('mCarbon').innerHTML = `${Math.round(totalCarbon).toLocaleString('id-ID')} <span class="fs-6 text-muted">kg CO₂</span>`;
         document.getElementById('mCost').innerText = `Rp ${totalCost.toLocaleString('id-ID')}`;
 
         // 1. GRAFIK TOP 10 EMISI CARBON
-        let sortedData = [...dataProses].sort((a, b) => (b.lwbp + b.wbp) - (a.lwbp + a.wbp));
+        let sortedData = [...dataTerpilih].sort((a, b) => (b.lwbp + b.wbp) - (a.lwbp + a.wbp));
         let topGedung = sortedData.slice(0, 10);
 
         if (currentCharts.topCarbon) currentCharts.topCarbon.destroy();
@@ -226,22 +322,22 @@
             }
         });
 
-        // 2. GRAFIK DETIL BAR (STACKED) - KESELURUHAN GEDUNG
+        // 2. GRAFIK DETIL BAR (STACKED) - KESELURUHAN GEDUNG TERPILIH
         if (currentCharts.breakdown) currentCharts.breakdown.destroy();
         let ctx2 = document.getElementById('chartBreakdown').getContext('2d');
         currentCharts.breakdown = new Chart(ctx2, {
             type: 'bar',
             data: {
-                labels: dataProses.map(d => [d.nama, ` ${d.idpel}`]),
+                labels: dataTerpilih.map(d => [d.nama, ` ${d.idpel}`]),
                 datasets: [
                     {
-                        label: 'Konsumsi LWBP',
-                        data: dataProses.map(d => d.lwbp),
+                        label: 'Konsumsi LWBP (kWh)',
+                        data: dataTerpilih.map(d => d.lwbp),
                         backgroundColor: '#3498db'
                     },
                     {
                         label: 'Konsumsi WBP (kWh)',
-                        data: dataProses.map(d => d.wbp),
+                        data: dataTerpilih.map(d => d.wbp),
                         backgroundColor: '#e67e22'
                     }
                 ]
@@ -259,7 +355,7 @@
                             label: function(context) {
                                 let val = context.raw || 0;
                                 let idx = context.dataIndex;
-                                let itemData = dataProses[idx];
+                                let itemData = dataTerpilih[idx];
                                 let totalKwhGedung = itemData.lwbp + itemData.wbp;
                                 let pct = totalKwhGedung > 0 ? ((val / totalKwhGedung) * 100).toFixed(1) : 0;
                                 let datasetLabel = context.dataset.label || '';
@@ -276,7 +372,7 @@
         alertBox.innerHTML = "";
         let count = 0;
 
-        dataProses.forEach(d => {
+        dataTerpilih.forEach(d => {
             let totalGedungKwh = d.lwbp + d.wbp;
             let rasioWbp = totalGedungKwh > 0 ? (d.wbp / totalGedungKwh) * 100 : 0;
             
@@ -291,11 +387,16 @@
         });
 
         if (count === 0) {
-            alertBox.innerHTML = `<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-check text-success fs-2 mb-2"></i><br>Seluruh gedung efisien dalam pembagian beban puncak (WBP).</div>`;
+            alertBox.innerHTML = `<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-check text-success fs-2 mb-2"></i><br>Tidak ada gedung yang dipilih atau beban puncak aman efisien.</div>`;
         }
     }
 
-    window.addEventListener('DOMContentLoaded', renderDashboard);
+    // Inisialisasi saat halaman pertama kali dibuka
+    window.addEventListener('DOMContentLoaded', () => {
+        initSelectionStates();
+        renderGedungSelector();
+        renderDashboard();
+    });
 </script>
 </body>
 </html>
