@@ -209,7 +209,7 @@
                     <input class="form-check-input ms-1 me-2 gedung-cb" type="checkbox" id="cbGedung_${g.id}" 
                            onchange="onGedungCheckboxChange(${g.id}, this.checked)" ${isChecked ? 'checked' : ''}>
                     <label class="form-check-label gedung-check-label text-truncate" style="max-width:80%;" for="cbGedung_${g.id}" title="${g.nama}">
-                        <b>${g.nama}</b><br><small class="text-muted"> ${g.idpel}</small>
+                        <b>${g.nama}</b><br><small class="text-muted">IDPEL: ${g.idpel}</small>
                     </label>
                 </div>
             `;
@@ -244,10 +244,16 @@
     function renderDashboard() {
         const filter = document.getElementById('regionFilter').value;
 
-// 1. Ambil nilai Luas Area yang diinput user
-        let totalAreaInput = parseFloat(document.getElementById('totalArea').value) || 1;
+        // Ambil data berdasarkan filter wilayah
+        let dataProses = databaseGedung;
+        if (filter !== "SEMUA") {
+            dataProses = databaseGedung.filter(item => item.wilayah === filter);
+        }
 
-        // 2. Hitung total untuk Kotak Indikator Atas
+        // Saring kembali data hanya untuk gedung yang lolos centang (gedungSelection == true)
+        let dataTerpilih = dataProses.filter(item => gedungSelection[item.id] !== false);
+
+        // Hitung total untuk Kotak Indikator Atas
         let totalLwbp = 0, totalWbp = 0, totalCost = 0;
         dataTerpilih.forEach(d => {
             totalLwbp += d.lwbp;
@@ -255,24 +261,18 @@
             totalCost += d.tagihan;
         });
         let totalKwh = totalLwbp + totalWbp;
-        
-        // 3. PERBAIKAN RUMUS: Hitung total emisi dulu, lalu bagi dengan Luas Area Bangunan
-        let totalCarbonMurni = totalKwh * 0.85; 
-        let intensitasCarbon = totalCarbonMurni / totalAreaInput; // Menjadi kg CO₂ / m²
+        let totalCarbon = totalKwh * 0.85;
 
         // Hitung persentase global
         let pctLwbp = totalKwh > 0 ? ((totalLwbp / totalKwh) * 100).toFixed(1) : 0;
         let pctWbp = totalKwh > 0 ? ((totalWbp / totalKwh) * 100).toFixed(1) : 0;
 
-        // 4. UPDATE TAMPILAN KARTU ATAS (Nilai emisi sekarang dinamis mengikuti Luas Area)
+        // Update Kartu Atas
         document.getElementById('mLwbp').innerHTML = `${Math.round(totalLwbp).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span> <span class="badge bg-primary ms-1">${pctLwbp}%</span>`;
         document.getElementById('mWbp').innerHTML = `${Math.round(totalWbp).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span> <span class="badge bg-warning text-dark ms-1">${pctWbp}%</span>`;
-        
-        // Menampilkan hasil pembagian m² dengan presisi 2 angka di belakang koma
-        document.getElementById('mCarbon').innerHTML = `${intensitasCarbon.toFixed(2)} <span class="fs-6 text-muted">kg CO₂/m²</span>`;
-        
+        document.getElementById('mCarbon').innerHTML = `${Math.round(totalCarbon).toLocaleString('id-ID')} <span class="fs-6 text-muted">kg CO₂</span>`;
         document.getElementById('mCost').innerText = `Rp ${totalCost.toLocaleString('id-ID')}`;
-        
+
         // 1. GRAFIK TOP 10 EMISI CARBON
         let sortedData = [...dataTerpilih].sort((a, b) => (b.lwbp + b.wbp) - (a.lwbp + a.wbp));
         let topGedung = sortedData.slice(0, 10);
@@ -282,7 +282,7 @@
         currentCharts.topCarbon = new Chart(ctx1, {
             type: 'bar',
             data: {
-                labels: topGedung.map(d => [d.nama - ` ${d.idpel}`]),
+                labels: topGedung.map(d => [d.nama, ` ${d.idpel}`]),
                 datasets: [
                     {
                         label: 'Emisi dari LWBP (kg CO₂)',
@@ -328,7 +328,7 @@
         currentCharts.breakdown = new Chart(ctx2, {
             type: 'bar',
             data: {
-                labels: dataTerpilih.map(d => [d.nama - ` ${d.idpel}`]),
+                labels: dataTerpilih.map(d => [d.nama, ` ${d.idpel}`]),
                 datasets: [
                     {
                         label: 'Konsumsi LWBP (kWh)',
