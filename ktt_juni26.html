@@ -67,8 +67,8 @@
         </div>
         <div class="col-md-3">
             <div class="card p-3 metric-card bg-white" style="border-left-color: #2ecc71;">
-                <small class="text-muted fw-bold">TOTAL JEJAK EMISI CO₂</small>
-                <h3 class="fw-bold my-1 text-success" id="mCarbon">0 <span class="fs-6 text-muted">kg CO₂</span></h3>
+                <small class="text-muted fw-bold">INTENSITAS EMISI CO₂</small>
+                <h3 class="fw-bold my-1 text-success" id="mCarbon">0 <span class="fs-6 text-muted">kg CO₂/m²</span></h3>
             </div>
         </div>
         <div class="col-md-3">
@@ -125,7 +125,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // Database Utama Gabungan Unesa dengan Pemetaan IDPEL PLN 12-Digit
+    // Database Utama Juni 2026
     const databaseGedung = [
         { id: 1, idpel: "512010234561", nama: "Kolam Renang Unesa", wilayah: "LIDAH_WETAN", lwbp: 18591, wbp: 0, tagihan: 16731900 },
         { id: 2, idpel: "512010234562", nama: "Asrama Unesa", wilayah: "LIDAH_WETAN", lwbp: 12576, wbp: 0, tagihan: 21373289 },
@@ -157,10 +157,8 @@
     ];
 
     let currentCharts = {};
-    // Objek penyimpan status pilihan checkbox gedung (True = Dihitung, False = Dikeluarkan)
     let gedungSelection = {};
 
-    // Inisialisasi awal status pilihan gedung
     function initSelectionStates() {
         databaseGedung.forEach(g => {
             gedungSelection[g.id] = true;
@@ -180,13 +178,11 @@
     }
 
     function resetSelectionAndRender() {
-        // Saat filter wilayah diubah, centang semua gedung kembali ke default aktif
         initSelectionStates();
         renderGedungSelector();
         renderDashboard();
     }
 
-    // Fungsi menggambar item checkbox gedung di bawah grafik detail
     function renderGedungSelector() {
         const filter = document.getElementById('regionFilter').value;
         const container = document.getElementById('gedungSelectorContainer');
@@ -234,7 +230,6 @@
             gedungSelection[g.id] = status;
         });
 
-        // Set visual checkbox di UI
         const checkboxes = document.querySelectorAll('.gedung-cb');
         checkboxes.forEach(cb => cb.checked = status);
 
@@ -243,6 +238,8 @@
 
     function renderDashboard() {
         const filter = document.getElementById('regionFilter').value;
+        // Ambil nilai Luas Area dari Input m2 secara aman
+        let luasArea = parseFloat(document.getElementById('totalArea').value) || 1;
 
         // Ambil data berdasarkan filter wilayah
         let dataProses = databaseGedung;
@@ -250,10 +247,10 @@
             dataProses = databaseGedung.filter(item => item.wilayah === filter);
         }
 
-        // Saring kembali data hanya untuk gedung yang lolos centang (gedungSelection == true)
+        // Saring data gedung yang dicentang aktif
         let dataTerpilih = dataProses.filter(item => gedungSelection[item.id] !== false);
 
-        // Hitung total untuk Kotak Indikator Atas
+        // Hitung total akumulasi
         let totalLwbp = 0, totalWbp = 0, totalCost = 0;
         dataTerpilih.forEach(d => {
             totalLwbp += d.lwbp;
@@ -261,16 +258,19 @@
             totalCost += d.tagihan;
         });
         let totalKwh = totalLwbp + totalWbp;
-        let totalCarbon = totalKwh * 0.85;
+        
+        // RUMUS FIX AUDIT: Emisi Total dibagi Luas Area menghasilkan Intensitas Karbon (kg CO2 / m2)
+        let totalCarbonMurni = totalKwh * 0.85; 
+        let intensitasCarbon = totalCarbonMurni / luasArea;
 
         // Hitung persentase global
         let pctLwbp = totalKwh > 0 ? ((totalLwbp / totalKwh) * 100).toFixed(1) : 0;
         let pctWbp = totalKwh > 0 ? ((totalWbp / totalKwh) * 100).toFixed(1) : 0;
 
-        // Update Kartu Atas
+        // Tampilkan ke 4 Kotak Atas
         document.getElementById('mLwbp').innerHTML = `${Math.round(totalLwbp).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span> <span class="badge bg-primary ms-1">${pctLwbp}%</span>`;
         document.getElementById('mWbp').innerHTML = `${Math.round(totalWbp).toLocaleString('id-ID')} <span class="fs-6 text-muted">kWh</span> <span class="badge bg-warning text-dark ms-1">${pctWbp}%</span>`;
-        document.getElementById('mCarbon').innerHTML = `${Math.round(totalCarbon).toLocaleString('id-ID')} <span class="fs-6 text-muted">kg CO₂</span>`;
+        document.getElementById('mCarbon').innerHTML = `${intensitasCarbon.toFixed(2)} <span class="fs-6 text-muted">kg CO₂/m²</span>`;
         document.getElementById('mCost').innerText = `Rp ${totalCost.toLocaleString('id-ID')}`;
 
         // 1. GRAFIK TOP 10 EMISI CARBON
@@ -303,26 +303,11 @@
                 scales: {
                     x: { stacked: true },
                     y: { stacked: true, ticks: { font: { size: 11 } } }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let val = context.raw || 0;
-                                let idx = context.dataIndex;
-                                let itemData = topGedung[idx];
-                                let totalGedungEmisi = (itemData.lwbp + itemData.wbp) * 0.85;
-                                let pct = totalGedungEmisi > 0 ? ((val / totalGedungEmisi) * 100).toFixed(1) : 0;
-                                let datasetLabel = context.dataset.label || '';
-                                return `${datasetLabel}: ${val.toLocaleString('id-ID')} kg (${pct}%)`;
-                            }
-                        }
-                    }
                 }
             }
         });
 
-        // 2. GRAFIK DETIL BAR (STACKED) - KESELURUHAN GEDUNG TERPILIH
+        // 2. GRAFIK DETIL BREAKDOWN KESELURUHAN
         if (currentCharts.breakdown) currentCharts.breakdown.destroy();
         let ctx2 = document.getElementById('chartBreakdown').getContext('2d');
         currentCharts.breakdown = new Chart(ctx2, {
@@ -348,26 +333,11 @@
                 scales: {
                     x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90, font: { size: 10 } } },
                     y: { stacked: true }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let val = context.raw || 0;
-                                let idx = context.dataIndex;
-                                let itemData = dataTerpilih[idx];
-                                let totalKwhGedung = itemData.lwbp + itemData.wbp;
-                                let pct = totalKwhGedung > 0 ? ((val / totalKwhGedung) * 100).toFixed(1) : 0;
-                                let datasetLabel = context.dataset.label || '';
-                                return `${datasetLabel}: ${val.toLocaleString('id-ID')} kWh (${pct}%)`;
-                            }
-                        }
-                    }
                 }
             }
         });
 
-        // 3. GENERATE ALERTS AUDIT OTOMATIS
+        // 3. GENERATE ALERTS AUDIT
         let alertBox = document.getElementById('auditAlerts');
         alertBox.innerHTML = "";
         let count = 0;
@@ -380,18 +350,17 @@
                 count++;
                 alertBox.innerHTML += `
                     <div class="alert alert-warning p-2 mb-2" style="font-size: 13px; border-left: 4px solid #e67e22;">
-                        <i class="fa-solid fa-clock"></i> <b>${d.nama}</b> <small class="text-muted">(${d.idpel})</small><br>
-                        Konsumsi WBP tinggi: <b>${rasioWbp.toFixed(1)}%</b>. Rekomendasi mitigasi beban setelah pukul 18.00.
+                        <i class="fa-solid fa-clock"></i> <b>${d.nama}</b><br>
+                        Rasio WBP Tinggi: <b>${rasioWbp.toFixed(1)}%</b>.
                     </div>`;
             }
         });
 
         if (count === 0) {
-            alertBox.innerHTML = `<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-check text-success fs-2 mb-2"></i><br>Tidak ada gedung yang dipilih atau beban puncak aman efisien.</div>`;
+            alertBox.innerHTML = `<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-check text-success fs-2 mb-2"></i><br>Beban puncak efisien.</div>`;
         }
     }
 
-    // Inisialisasi saat halaman pertama kali dibuka
     window.addEventListener('DOMContentLoaded', () => {
         initSelectionStates();
         renderGedungSelector();
